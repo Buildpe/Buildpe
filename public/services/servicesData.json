@@ -1,0 +1,334 @@
+{
+  "services": [
+    {
+      "id": "RC001",
+      "title": "Residential Construction",
+      "price": "Get Quote!",
+      "originalPrice": null,
+      "discount": null,
+      "image": "residential-construction.jpg",
+      "category": "Construction",
+      "description": "Complete residential construction services from foundation to finishing. We handle all aspects of building your dream home with quality materials, expert craftsmanship, and timely delivery. Includes architectural planning, structural design, and complete project management."
+    },
+    {
+      "id": "CC001",
+      "title": "Commercial Construction",
+      "price": "Get Quote!",
+      "originalPrice": null,
+      "discount": null,
+      "image": "commercial-construction.jpg",
+      "category": "Construction",
+      "description": "Professional commercial construction services for offices, retail spaces, and business establishments. Features robust structural planning, modern designs, and compliance with commercial building codes. End-to-end project execution with quality assurance."
+    },
+    {
+      "id": "CE001",
+      "title": "Cost Estimates",
+      "price": "From ₹5,000",
+      "originalPrice": 10000,
+      "discount": 50,
+      "image": "cost-estimates.jpg",
+      "category": "Construction",
+      "description": "Detailed construction cost estimation services to help you plan your budget accurately. Includes material costs, labor charges, equipment rental, and contingency planning. Get transparent breakdowns before starting your project."
+    },
+    {
+      "id": "CT001",
+      "title": "Contract Estimates",
+      "price": "From ₹8,000",
+      "originalPrice": 15000,
+      "discount": 47,
+      "image": "contract-estimates.jpg",
+      "category": "Construction",
+      "description": "Professional contract estimation and documentation services. Includes scope of work definition, timeline planning, payment schedules, and legal documentation. Ensure clarity and protection for your construction projects."
+    },
+    {
+      "id": "SP001",
+      "title": "Structural Planning",
+      "price": "From ₹25,000",
+      "originalPrice": 45000,
+      "discount": 44,
+      "image": "structural-planning.jpg",
+      "category": "Construction",
+      "description": "Expert structural planning and engineering services for safe and durable buildings. Includes load calculations, foundation design, beam and column layout, and earthquake-resistant planning. Certified engineers ensure compliance with building standards."
+    },
+    {
+      "id": "RN001",
+      "title": "Renovation",
+      "price": "From ₹50,000",
+      "originalPrice": 85000,
+      "discount": 41,
+      "image": "renovation.jpg",
+      "category": "Construction",
+      "description": "Complete home and office renovation services to modernize your space. Includes demolition, rebuilding, plumbing updates, electrical rewiring, and interior finishing. Transform old structures into contemporary living or working spaces."
+    },
+    {
+      "id": "BW001",
+      "title": "Borewell",
+      "price": "From ₹45,000",
+      "originalPrice": 70000,
+      "discount": 36,
+      "image": "borewell.jpg",
+      "category": "Construction",
+      "description": "Professional borewell drilling services with advanced machinery and experienced operators. Includes site survey, water detection, drilling up to required depth, casing, and motor installation. Reliable water source for residential and commercial properties."
+    },
+    {
+      "id": "PR001",
+      "title": "Permission & Registration",
+      "price": "From ₹15,000",
+      "originalPrice": 30000,
+      "discount": 50,
+      "image": "permission-registration.jpg",
+      "category": "Construction",
+      "description": "Complete assistance with building permissions, approvals, and property registration. Handle documentation, municipal approvals, NOCs, and legal formalities. Hassle-free processing with expert guidance through bureaucratic procedures."
+    },
+    {
+      "id": "WP001",
+      "title": "Wallpaper Installation",
+      "price": "From ₹12,000",
+      "originalPrice": 20000,
+      "discount": 40,
+      "image": "wallpaper-installation.jpg",
+      "category": "Interiors",
+      "description": "Professional wallpaper installation service with premium quality materials and expert application. Choose from thousands of designs, patterns, and textures. Includes surface preparation, precise installation, and seamless finishing for stunning wall transformations."
+    },
+    {
+      "id": "TK001",
+      "title": "Turnkey Interiors",
+      "price": "From ₹2,50,000",
+      "originalPrice": 400000,
+      "discount": 38,
+      "image": "turnkey-interiors.jpg",
+      "category": "Interiors",
+      "description": "Complete turnkey interior solutions from design to execution. Includes space planning, custom furniture, false ceiling, flooring, painting, lighting, and decor. Single-point contact for entire project with guaranteed timeline and quality delivery."
+    },
+    {
+      "id": "KI001",
+      "title": "Kitchen Interiors",
+      "price": "From ₹89,999",
+      "originalPrice": 150000,
+      "discount": 40,
+      "image": "kitchen-interiors.jpg",
+      "category": "Interiors",
+      "description": "Modular kitchen design with custom cabinetry, smart storage solutions, premium hardware, and ergonomic layouts. Features 3D visualization, material selection, chimney and hob installation, and complete setup. Perfect blend of style and functionality."
+    },
+    {
+      "id": "TV001",
+      "title": "TV Units",
+      "price": "From ₹18,000",
+      "originalPrice": 30000,
+      "discount": 40,
+      "image": "tv-units.jpg",
+      "category": "Interiors",
+      "description": "Custom TV unit designs with modern aesthetics and smart storage. Includes cable management, LED lighting, display shelves, and entertainment system integration. Available in various materials and finishes to match your interior theme."
+    },
+    {
+      "id": "IM001",
+      "title": "Interior Makeover",
+      "price": "From ₹35,000",
+      "originalPrice": 60000,
+      "discount": 42,
+      "image": "interior-makeover.jpg",
+      "category": "Interiors",
+      "description": "Complete room makeover service to refresh and modernize your living spaces. Includes color consultation, furniture rearrangement, lighting updates, decor selection, and styling. Transform any room without major construction work."
+    },
+    {
+      "id": "FC001",
+      "title": "False Ceiling",
+      "price": "From ₹65,000",
+      "originalPrice": 100000,
+      "discount": 35,
+      "image": "false-ceiling.jpg",
+      "category": "Interiors",
+      "description": "Designer false ceiling installation with gypsum, POP, or wooden materials. Features concealed lighting, AC duct hiding, and architectural elements. Enhances aesthetics while providing thermal and acoustic insulation."
+    },
+    {
+      "id": "PEB001",
+      "title": "PEB Structure",
+      "price": "Get Quote!",
+      "originalPrice": null,
+      "discount": null,
+      "image": "peb-structure.jpg",
+      "category": "PEB Structure",
+      "description": "Pre-Engineered Building (PEB) structures for warehouses, factories, and large commercial spaces. Features quick installation, cost-effectiveness, durability, and flexibility. Includes design, fabrication, and on-site erection with quality steel components."
+    },
+    {
+      "id": "RSI001",
+      "title": "Restaurant Interiors",
+      "price": "Get Quote!",
+      "originalPrice": null,
+      "discount": null,
+      "image": "restaurant-interiors.jpg",
+      "category": "Store Interiors",
+      "description": "Create an inviting dining atmosphere with our restaurant interior design. Includes seating arrangements, kitchen layout, lighting design, branding elements, and theme-based decor. Optimize space for customer flow and staff efficiency."
+    },
+    {
+      "id": "CSI001",
+      "title": "Clothing Store Interiors",
+      "price": "Get Quote!",
+      "originalPrice": null,
+      "discount": null,
+      "image": "clothing-store-interiors.jpg",
+      "category": "Store Interiors",
+      "description": "Stylish clothing store design with attractive display systems, trial room setups, billing counters, and strategic lighting. Create an engaging shopping experience that showcases your merchandise and reflects your brand identity."
+    },
+    {
+      "id": "ESI001",
+      "title": "Electronic Store Interiors",
+      "price": "Get Quote!",
+      "originalPrice": null,
+      "discount": null,
+      "image": "electronic-store-interiors.jpg",
+      "category": "Store Interiors",
+      "description": "Modern electronics store design with product display units, demo zones, service counters, and proper cable management. Features secure storage, organized inventory display, and customer-friendly layouts for optimal shopping experience."
+    },
+    {
+      "id": "SAI001",
+      "title": "Saloon Interiors",
+      "price": "From ₹80,000",
+      "originalPrice": 130000,
+      "discount": 38,
+      "image": "saloon-interiors.jpg",
+      "category": "Store Interiors",
+      "description": "Professional salon interior design with styling stations, wash areas, reception, and waiting lounge. Includes mirror setups, lighting, storage cabinets, and ambiance creation. Comfortable and stylish environment for your clients."
+    },
+    {
+      "id": "IFS001",
+      "title": "Individual Firm Setup Interiors",
+      "price": "From ₹60,000",
+      "originalPrice": 100000,
+      "discount": 40,
+      "image": "firm-setup-interiors.jpg",
+      "category": "Store Interiors",
+      "description": "Complete office setup for individual firms, startups, and small businesses. Includes workstations, meeting areas, reception, storage solutions, and branding elements. Professional and productive workspace tailored to your business needs."
+    },
+    {
+      "id": "FB001",
+      "title": "Football Courts",
+      "price": "Get Quote!",
+      "originalPrice": null,
+      "discount": null,
+      "image": "football-courts.jpg",
+      "category": "Sport Structures",
+      "description": "Professional football court construction with synthetic turf, proper drainage, boundary fencing, and goal posts. Includes leveling, base preparation, and lighting setup. Build regulation-size or custom-size courts for residential or commercial use."
+    },
+    {
+      "id": "CR001",
+      "title": "Cricket Courts",
+      "price": "Get Quote!",
+      "originalPrice": null,
+      "discount": null,
+      "image": "cricket-courts.jpg",
+      "category": "Sport Structures",
+      "description": "Cricket pitch and practice net construction with quality turf, proper pitch preparation, net structures, and boundary setup. Includes artificial or natural turf options, sight screens, and lighting. Perfect for academies, clubs, or private facilities."
+    },
+    {
+      "id": "CL001",
+      "title": "Commercial Landscaping",
+      "price": "Get Quote!",
+      "originalPrice": null,
+      "discount": null,
+      "image": "commercial-landscaping.jpg",
+      "category": "Landscaping",
+      "description": "Professional landscaping for commercial properties, corporate campuses, and business establishments. Features manicured lawns, ornamental plants, pathways, water features, and outdoor seating. Enhance property value and create welcoming environments."
+    },
+    {
+      "id": "RL001",
+      "title": "Residential Landscaping",
+      "price": "From ₹35,000",
+      "originalPrice": 60000,
+      "discount": 42,
+      "image": "residential-landscaping.jpg",
+      "category": "Landscaping",
+      "description": "Beautiful garden design and landscaping for homes and villas. Includes lawn installation, plant selection, pathway design, irrigation systems, and outdoor lighting. Create your personal green oasis with low-maintenance yet stunning landscapes."
+    },
+    {
+      "id": "BP001",
+      "title": "Balcony Plantation",
+      "price": "From ₹12,000",
+      "originalPrice": 20000,
+      "discount": 40,
+      "image": "balcony-plantation.jpg",
+      "category": "Landscaping",
+      "description": "Transform your balcony into a green paradise with curated plant selection, planters, vertical gardens, and irrigation setup. Includes decorative pots, climbers, flowering plants, and maintenance guidance. Perfect for urban gardening enthusiasts."
+    },
+    {
+      "id": "IBH001",
+      "title": "Inspection Before Handover",
+      "price": "From ₹8,000",
+      "originalPrice": 15000,
+      "discount": 47,
+      "image": "inspection-handover.jpg",
+      "category": "Home Inspections",
+      "description": "Comprehensive property inspection before taking possession. Includes structural check, plumbing, electrical, painting, flooring, door/window fittings, and fixture verification. Detailed report with photographs and recommendations for rectification."
+    },
+    {
+      "id": "DI001",
+      "title": "Dampness Inspection",
+      "price": "From ₹5,000",
+      "originalPrice": 10000,
+      "discount": 50,
+      "image": "dampness-inspection.jpg",
+      "category": "Home Inspections",
+      "description": "Specialized dampness and seepage inspection with moisture detection equipment. Identify water leakage sources, wall dampness, ceiling seepage, and drainage issues. Includes cause analysis and waterproofing solution recommendations."
+    },
+    {
+      "id": "RI001",
+      "title": "Re-inspection",
+      "price": "From ₹6,000",
+      "originalPrice": 12000,
+      "discount": 50,
+      "image": "re-inspection.jpg",
+      "category": "Home Inspections",
+      "description": "Follow-up inspection service to verify completion of rectification work. Check if previously identified issues have been properly resolved. Ensure quality standards are met before final acceptance and payment release."
+    },
+    {
+      "id": "LM001",
+      "title": "Laminates",
+      "price": "From ₹180/sq.ft",
+      "originalPrice": 280,
+      "discount": 36,
+      "image": "laminates.jpg",
+      "category": "Building Material",
+      "description": "Premium quality laminates for furniture, kitchen cabinets, and wall panels. Wide range of colors, textures, and finishes including matte, glossy, and textured options. Durable, scratch-resistant, and easy-to-maintain surfacing solutions."
+    },
+    {
+      "id": "FL001",
+      "title": "Flooring",
+      "price": "From ₹45/sq.ft",
+      "originalPrice": 80,
+      "discount": 44,
+      "image": "flooring.jpg",
+      "category": "Building Material",
+      "description": "Comprehensive flooring solutions including tiles, marble, granite, wooden flooring, vinyl, and laminate. Expert installation services with precise leveling, grouting, and finishing. Choose from thousands of options to match your style and budget."
+    },
+    {
+      "id": "LP001",
+      "title": "Louvers & Panels",
+      "price": "From ₹220/sq.ft",
+      "originalPrice": 350,
+      "discount": 37,
+      "image": "louvers-panels.jpg",
+      "category": "Building Material",
+      "description": "Decorative louvers and wall panels for modern interior and exterior applications. Features ventilation, privacy screening, and aesthetic enhancement. Available in wood, metal, PVC, and composite materials with custom sizing options."
+    },
+    {
+      "id": "TB001",
+      "title": "Tiles & Backsplashes",
+      "price": "From ₹35/sq.ft",
+      "originalPrice": 65,
+      "discount": 46,
+      "image": "tiles-backsplashes.jpg",
+      "category": "Building Material",
+      "description": "Designer tiles and backsplash solutions for kitchens, bathrooms, and feature walls. Includes ceramic, porcelain, glass, and mosaic tiles in various patterns and colors. Professional installation with waterproofing and grouting services."
+    },
+    {
+      "id": "WC001",
+      "title": "Wardrobe Cabinetry",
+      "price": "From ₹1,200/sq.ft",
+      "originalPrice": 1800,
+      "discount": 33,
+      "image": "wardrobe-cabinetry.jpg",
+      "category": "Building Material",
+      "description": "Custom wardrobe and cabinet solutions with premium materials and hardware. Features sliding/swing doors, internal organizers, soft-close mechanisms, and mirror options. Optimized storage design with elegant finishes to match your interiors."
+    }
+  ]
+}
