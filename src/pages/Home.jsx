@@ -1,6 +1,6 @@
 import HeroSlider from '../components/home/Heroslider';
 import CategoryNav from '../components/common/Categorynav';
-import TopDeals from '../components/home/Topdeals';
+import TopDeals from '../components/home/TopDeals';
 import BestDealOfDay from '../components/common/BestDealofday';
 import CostEstimator from '../components/home/Costestimator';
 import TestimonialSlider from '../components/home/TestimonialSlider';
