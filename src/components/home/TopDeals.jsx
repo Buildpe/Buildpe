@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import ProductCard from '../common/ProductCard';
+import ProductCard from '../common/Productcard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { loadServicesByComponent } from '../../utils/servicesLoader';
 
