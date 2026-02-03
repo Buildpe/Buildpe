@@ -48,8 +48,8 @@ export default function Contact() {
     {
       icon: Mail,
       title: 'Email',
-      details: 'rohit@eternaleveryday.gmail.com',
-      link: 'mailto:rohit@eternaleveryday.gmail.com'
+      details: 'rohit@eternaleveryday.com',
+      link: 'mailto:rohit@eternaleveryday.com'
     },
     {
       icon: MapPin,

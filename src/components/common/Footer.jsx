@@ -39,7 +39,7 @@ export default function Footer() {
               </div>
               <div style={contactItemStyle}>
                 <Mail size={16} />
-                <span>rohit@eternaleveryday@gmail.com</span>
+                <span>rohit@eternaleveryday.com</span>
               </div>
               <div style={contactItemStyle}>
                 <MapPin size={16} />

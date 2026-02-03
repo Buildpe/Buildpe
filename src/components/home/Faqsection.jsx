@@ -101,7 +101,7 @@ export default function FAQSection() {
             <button className="contact-btn">Contact Us</button>
             <div className="contact-info">
               <p><strong>Call us:</strong> +91-9676368455</p>
-              <p><strong>Email:</strong> rohit@eternaleveryday@gmail.com</p>
+              <p><strong>Email:</strong> rohit@eternaleveryday.com</p>
               <p><strong>Hours:</strong> Mon-Sat, 9 AM - 7 PM</p>
             </div>
           </div>

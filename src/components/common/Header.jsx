@@ -643,9 +643,9 @@ export default function Header() {
             </a>
             
             {/* Email */}
-            <a href="mailto:rohit@eternaleveryday@gmail.com" className="top-bar-item top-bar-email">
+            <a href="mailto:rohit@eternaleveryday.com" className="top-bar-item top-bar-email">
               <Mail />
-              <span>rohit@eternaleveryday@gmail.com</span>
+              <span>rohit@eternaleveryday.com</span>
             </a>
 
             {/* Social Icons */}

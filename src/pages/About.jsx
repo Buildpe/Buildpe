@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Users, Building2, TrendingUp, CheckCircle, Heart, Target, Eye, Phone, Mail, MapPin } from 'lucide-react';
+import { Award, Users, Building2, TrendingUp, CheckCircle, Heart, Target, Eye, Phone, Mail, MapPin, Briefcase, PenTool, ClipboardCheck, Headphones } from 'lucide-react';
 
 export default function About() {
   const stats = [
@@ -34,28 +34,24 @@ export default function About() {
 
   const team = [
     {
-      name: 'Rajesh Kumar',
-      role: 'Founder & CEO',
-      initials: 'RK',
-      description: '15+ years in construction industry'
+      icon: Briefcase,
+      role: 'Leadership',
+      description: 'Experienced industry professionals'
     },
     {
-      name: 'Priya Sharma',
-      role: 'Lead Interior Designer',
-      initials: 'PS',
-      description: 'Award-winning designer'
+      icon: PenTool,
+      role: 'Design Team',
+      description: 'Creative interior designers'
     },
     {
-      name: 'Amit Patel',
-      role: 'Project Manager',
-      initials: 'AP',
-      description: 'Expert in project execution'
+      icon: ClipboardCheck,
+      role: 'Project Management',
+      description: 'Expert project execution'
     },
     {
-      name: 'Sneha Reddy',
-      role: 'Customer Relations',
-      initials: 'SR',
-      description: 'Dedicated to client success'
+      icon: Headphones,
+      role: 'Client Support',
+      description: 'Dedicated customer service'
     }
   ];
 
@@ -186,19 +182,18 @@ export default function About() {
       {/* Team Section */}
       <section className="team-section">
         <div className="container">
-          <h2 className="section-title centered">Meet Our Team</h2>
+          <h2 className="section-title centered">Our Departments</h2>
           <p className="section-subtitle centered">
-            The experts behind your dream projects
+            Dedicated teams working together for your success
           </p>
           <div className="team-grid">
             {team.map((member, index) => (
               <div key={index} className="team-card">
                 <div className="team-avatar">
-                  <span className="avatar-initials">{member.initials}</span>
+                  <member.icon size={48} />
                 </div>
                 <div className="team-info">
-                  <h3>{member.name}</h3>
-                  <p className="team-role">{member.role}</p>
+                  <h3>{member.role}</h3>
                   <p className="team-description">{member.description}</p>
                 </div>
               </div>
@@ -496,7 +491,7 @@ export default function About() {
           overflow: hidden;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
-          padding: 30px;
+          padding: 40px 30px;
           text-align: center;
         }
 
@@ -506,20 +501,15 @@ export default function About() {
         }
 
         .team-avatar {
-          width: 120px;
-          height: 120px;
-          margin: 0 auto 20px;
+          width: 100px;
+          height: 100px;
+          margin: 0 auto 25px;
           background: linear-gradient(135deg, #EC1940 0%, #F89C1C 100%);
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           box-shadow: 0 4px 20px rgba(236, 25, 64, 0.3);
-        }
-
-        .avatar-initials {
-          font-size: 2.5rem;
-          font-weight: 700;
           color: white;
         }
 
@@ -531,18 +521,11 @@ export default function About() {
           font-size: 1.25rem;
           font-weight: 600;
           color: #111827;
-          margin-bottom: 5px;
-        }
-
-        .team-role {
-          font-size: 0.9375rem;
-          color: #EC1940;
-          font-weight: 500;
           margin-bottom: 10px;
         }
 
         .team-description {
-          font-size: 0.875rem;
+          font-size: 0.9375rem;
           color: #6b7280;
           line-height: 1.6;
         }
@@ -671,12 +654,8 @@ export default function About() {
           }
 
           .team-avatar {
-            width: 100px;
-            height: 100px;
-          }
-
-          .avatar-initials {
-            font-size: 2rem;
+            width: 90px;
+            height: 90px;
           }
         }
       `}</style>
