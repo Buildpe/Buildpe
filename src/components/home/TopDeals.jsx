@@ -165,12 +165,6 @@ const TopDeals = ({ deals = [], title = "Top Deals" }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s ease;
-        }
-
-        .nav-button:hover {
-          background-color: #f9fafb;
-          border-color: #9ca3af;
         }
 
         .products-container {

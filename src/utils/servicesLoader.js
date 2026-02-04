@@ -13,11 +13,8 @@ export const loadAllServices = async () => {
     }
     const data = await response.json();
     
-    // Add image paths to services
-    return data.services.map(service => ({
-      ...service,
-      image: service.image ? `/services/images/${service.image}` : null
-    }));
+    // Return services as-is - image paths are already correct in the JSON
+    return data.services;
   } catch (error) {
     console.error('Error loading services:', error);
     return [];
