@@ -3,8 +3,8 @@ import { Menu, X, Search, Phone, Mail, Instagram, Facebook, Twitter, Linkedin, L
 import { useNavigate, useLocation } from 'react-router-dom';
 import useSearch from '../../hooks/useSearch';
 import SearchDropdown from './Searchdropdown';
-import { getAllServices } from '../../services/serviceAPI';
-import { tokenStorage, logoutUser } from '../../Services/authAPI';
+import { getAllServices } from '../../Services/Serviceapi';
+import { tokenStorage , logoutUser } from '../../Services/Authapi';
 
 // ✅ Helper: decode JWT and extract role claim
 function getRoleFromToken() {
