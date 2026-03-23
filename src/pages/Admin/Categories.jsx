@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Trash2, Search, X, RefreshCw, Tag } from 'lucide-react';
 import AdminLayout from './AdminLayout';
-import { Toast, ConfirmDialog, Modal, ActBtn, Loading, Empty, Err } from './shared/index';
+import { Toast, ConfirmDialog, Modal, ActBtn, Loading, Empty, Err } from './shared';
 import { getAllCategories, createCategory, updateCategory, deleteCategory } from '../../Services/adminAPI';
 
 // ⚠️ Category entity has only: id, name

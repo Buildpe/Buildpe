@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import FilterBar from '../components/common/FilterBar';
 import ServicesList from '../components/services/ServicesList';
-import { getAllCategories, getServicesByCategory } from '../services/categoryAPI';
+import { getAllCategories, getServicesByCategory } from '../Services/Categoryapi';
 
 export default function Services() {
   const location = useLocation();

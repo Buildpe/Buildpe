@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { tokenStorage } from '../Services/authAPI';
+import { tokenStorage } from '../Services/Authapi';
 
 export default function OAuthCallback() {
   const navigate = useNavigate();

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Wrench, Tag, TrendingUp, ChevronRight, Loader2 } from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import { getStats, getAllCategories, getAllServices } from '../../Services/adminAPI';
-import { Loading } from './shared/index';
+import { Loading } from './shared';
 
 function StatCard({ Icon, label, value, color, loading }) {
   return (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, RefreshCw, Zap, TrendingUp, ChevronUp, ChevronDown } from 'lucide-react';
 import AdminLayout from './AdminLayout';
-import { Toast, ConfirmDialog, Loading, Empty, Err, ActBtn } from './shared/index';
+import { Toast, ConfirmDialog, Loading, Empty, Err, ActBtn } from './shared';
 import { getAllDeals, addDeal, removeDeal, updateDealPosition, getAllServices } from '../../Services/adminAPI';
 
 const DEAL_GROUPS = [

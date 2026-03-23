@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Lock, Unlock, Shield, History, Trash2, Search, X, RefreshCw, Users as UsersIcon } from 'lucide-react';
 import AdminLayout from './AdminLayout';
-import { Toast, ConfirmDialog, Modal, Badge, ActBtn, Loading, Empty, Err } from './shared/index';
+import { Toast, ConfirmDialog, Modal, Badge, ActBtn, Loading, Empty, Err } from './shared';
 import {
   getAllUsers, lockUser, unlockUser,
   changeUserRole, updateUserStatus,

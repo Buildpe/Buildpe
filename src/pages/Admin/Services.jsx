@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Trash2, Search, X, RefreshCw, Wrench, Loader2 } from 'lucide-react';
 import AdminLayout from './AdminLayout';
-import { Toast, ConfirmDialog, Badge, ActBtn, Loading, Empty, Err } from './shared/index';
+import { Toast, ConfirmDialog, Badge, ActBtn, Loading, Empty, Err } from './shared';
 import ImageUpload from './shared/ImageUpload';
 import {
   getAllCategories, getServicesByCategory,
