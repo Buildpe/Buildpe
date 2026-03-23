@@ -1,43 +1,51 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ProductCard from '../common/Productcard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { loadServicesByComponent } from '../../utils/servicesLoader';
+import apiClient from '../../Services/Api';
 
-const TopDeals = ({ deals = [], title = "Top Deals" }) => {
+const transformDealService = (svc) => {
+  const hasPrice = svc.price && Number(svc.price) > 0;
+  const discount = svc.discount && Number(svc.discount) > 0 ? svc.discount : null;
+  return {
+    id:            String(svc.id),
+    title:         svc.title,
+    description:   svc.description,
+    price:         hasPrice ? `₹${Number(svc.price).toLocaleString('en-IN')}` : 'Get Quote!',
+    originalPrice: hasPrice ? Number(svc.price) : null,
+    discount,
+    image:         svc.imgUrl || null,
+  };
+};
+
+const TopDeals = ({ title = 'Top Deals' }) => {
   const scrollContainerRef = useRef(null);
   const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState(null);
 
   useEffect(() => {
-    const loadServices = async () => {
+    const load = async () => {
       setLoading(true);
+      setError(null);
       try {
-        // Load services from topDeals.json
-        const loadedServices = await loadServicesByComponent('topDeals.json');
-        setServices(loadedServices);
-      } catch (error) {
-        console.error('Error loading top deals:', error);
+        const res = await apiClient.get('/api/public/deals', { params: { name: 'TOP_DEAL' } });
+        const data = Array.isArray(res.data) ? res.data : [];
+        setServices(data.map(transformDealService));
+      } catch {
+        setError('Failed to load services. Please try again later.');
         setServices([]);
       } finally {
         setLoading(false);
       }
     };
-
-    loadServices();
+    load();
   }, []);
-
-  // Use provided deals prop if available, otherwise use loaded services
-  const displayDeals = deals.length > 0 ? deals : services;
 
   const scroll = (direction) => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 320;
-      const newScrollLeft = scrollContainerRef.current.scrollLeft + 
-        (direction === 'left' ? -scrollAmount : scrollAmount);
-      
       scrollContainerRef.current.scrollTo({
-        left: newScrollLeft,
-        behavior: 'smooth'
+        left: scrollContainerRef.current.scrollLeft + (direction === 'left' ? -320 : 320),
+        behavior: 'smooth',
       });
     }
   };
@@ -45,8 +53,9 @@ const TopDeals = ({ deals = [], title = "Top Deals" }) => {
   if (loading) {
     return (
       <section className="top-deals-section">
-        <div className="top-deals-container">
-          <div className="loading-state">Loading services...</div>
+        <div className="loading-state">
+          <div className="loading-spinner" />
+          <p>Loading top deals...</p>
         </div>
         <style jsx>{`
           .top-deals-section {
@@ -54,18 +63,53 @@ const TopDeals = ({ deals = [], title = "Top Deals" }) => {
             padding: 1.5rem;
             border: 2px solid #d1d5db;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             height: 100%;
           }
-          
           .loading-state {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 300px;
-            color: #6b7280;
-            font-size: 1rem;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            min-height: 300px; gap: 1rem;
           }
+          .loading-spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+          @keyframes spin { to { transform: rotate(360deg); } }
+          .loading-state p { color: #6b7280; font-size: 1rem; margin: 0; }
+        `}</style>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="top-deals-section">
+        <div className="error-state">
+          <p className="error-message">{error}</p>
+          <button onClick={() => window.location.reload()} className="retry-button">Retry</button>
+        </div>
+        <style jsx>{`
+          .top-deals-section {
+            background-color: #fff; padding: 1.5rem;
+            border: 2px solid #d1d5db; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 100%;
+          }
+          .error-state {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            min-height: 300px; gap: 1rem;
+          }
+          .error-message { color: #dc2626; font-size: 1rem; margin: 0; }
+          .retry-button {
+            padding: 0.5rem 1.5rem; background-color: #2563eb;
+            color: white; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 0.875rem; font-weight: 500;
+          }
+          .retry-button:hover { background-color: #1d4ed8; }
         `}</style>
       </section>
     );
@@ -74,44 +118,36 @@ const TopDeals = ({ deals = [], title = "Top Deals" }) => {
   return (
     <section className="top-deals-section">
       <div className="top-deals-container">
+
         {/* Header */}
         <div className="top-deals-header">
           <h2 className="top-deals-title">{title}</h2>
-
-          {/* Navigation Buttons - Only show on desktop */}
+          {/* Nav buttons — desktop only */}
           <div className="nav-buttons">
-            <button
-              onClick={() => scroll('left')}
-              aria-label="Scroll left"
-              className="nav-button"
-            >
-              <ChevronLeft size={20} color="#666" />
+            <button onClick={() => scroll('left')}  aria-label="Scroll left"  className="nav-button">
+              <ChevronLeft  size={20} color="#666" />
             </button>
-            <button
-              onClick={() => scroll('right')}
-              aria-label="Scroll right"
-              className="nav-button"
-            >
+            <button onClick={() => scroll('right')} aria-label="Scroll right" className="nav-button">
               <ChevronRight size={20} color="#666" />
             </button>
           </div>
         </div>
 
-        {/* Products Container */}
-        <div
-          ref={scrollContainerRef}
-          className="products-container"
-        >
-          {displayDeals.length > 0 ? (
-            displayDeals.map((deal) => (
-              <div key={deal.id} className="product-item">
-                <ProductCard productData={deal} />
+        {/* Products */}
+        {services.length > 0 ? (
+          <div ref={scrollContainerRef} className="products-container">
+            {services.map(svc => (
+              <div key={svc.id} className="product-item">
+                <ProductCard productData={svc} />
               </div>
-            ))
-          ) : (
-            <div className="empty-state">No services available</div>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <p>No top deals available at the moment</p>
+          </div>
+        )}
+
       </div>
 
       <style jsx>{`
@@ -120,7 +156,7 @@ const TopDeals = ({ deals = [], title = "Top Deals" }) => {
           padding: 1.5rem;
           border: 2px solid #d1d5db;
           border-radius: 8px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           height: 100%;
           display: flex;
           flex-direction: column;
@@ -150,23 +186,20 @@ const TopDeals = ({ deals = [], title = "Top Deals" }) => {
           margin: 0;
         }
 
-        .nav-buttons {
-          display: flex;
-          gap: 0.5rem;
-        }
+        .nav-buttons { display: flex; gap: 0.5rem; }
 
         .nav-button {
-          width: 36px;
-          height: 36px;
+          width: 36px; height: 36px;
           border-radius: 50%;
           border: 1px solid #d1d5db;
           background-color: #fff;
           cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          display: flex; align-items: center; justify-content: center;
+          transition: all 0.2s;
         }
+        .nav-button:hover { background-color: #f3f4f6; border-color: #9ca3af; }
 
+        /* ── Desktop — horizontal scroll row ── */
         .products-container {
           display: flex;
           gap: 1rem;
@@ -178,10 +211,7 @@ const TopDeals = ({ deals = [], title = "Top Deals" }) => {
           padding-bottom: 0.5rem;
           flex: 1;
         }
-
-        .products-container::-webkit-scrollbar {
-          display: none;
-        }
+        .products-container::-webkit-scrollbar { display: none; }
 
         .product-item {
           min-width: 260px;
@@ -191,46 +221,42 @@ const TopDeals = ({ deals = [], title = "Top Deals" }) => {
         }
 
         .empty-state {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          min-height: 200px;
-          color: #9ca3af;
-          font-size: 1rem;
+          display: flex; align-items: center; justify-content: center;
+          width: 100%; min-height: 200px;
         }
+        .empty-state p { color: #9ca3af; font-size: 1rem; margin: 0; }
 
-        /* Mobile Styles */
+        /* ── Mobile — 2 per row grid ── */
         @media (max-width: 768px) {
           .top-deals-section {
             padding: 1rem;
             border: 1px solid #d1d5db;
           }
+          .top-deals-title { font-size: 1.25rem; }
 
-          .top-deals-title {
-            font-size: 1.25rem;
-          }
+          /* Hide nav buttons on mobile */
+          .nav-buttons { display: none; }
 
-          .nav-buttons {
-            display: none;
-          }
-
+          /* Switch from horizontal scroll to 2-column grid */
           .products-container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 0.75rem;
             overflow-x: visible;
             overflow-y: visible;
+            padding-bottom: 0;
           }
 
           .product-item {
-            min-width: 100%;
+            min-width: 0;
             max-width: 100%;
+            width: 100%;
+            height: auto;
           }
         }
 
-        /* Very small mobile */
-        @media (max-width: 480px) {
+        /* Very small mobile — 1 per row */
+        @media (max-width: 360px) {
           .products-container {
             grid-template-columns: 1fr;
           }

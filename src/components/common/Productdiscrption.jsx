@@ -1,1205 +1,554 @@
 import React, { useState } from 'react';
-import { X, ShoppingCart, Star, Zap, Shield, Truck, CheckCircle, Award, Clock, RefreshCw, Send } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  X, Star, Zap, Send, LogIn,
+  CheckCircle, Phone, Mail, User, ImageIcon,
+  ArrowRight, Tag, Shield, Clock, Award,
+  ThumbsUp, MapPin
+} from 'lucide-react';
+import { tokenStorage } from '../../Services/Authapi';
+
+const GOOGLE_FORM_CONFIG = {
+  formId: '1FAIpQLSf-z5xESgi94JF64E1KQ7vFIuqoOtbQQYKSij4CFwAI-KY0Aw',
+  entries: {
+    serviceName: 'entry.77093322',
+    name:        'entry.1392727185',
+    phone:       'entry.1491459465',
+    email:       'entry.903938955',
+  }
+};
 
 const ProductDescription = ({ product, isOpen, onClose }) => {
-  const [showQuoteForm, setShowQuoteForm] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
-  // Google Form Configuration
-  const GOOGLE_FORM_CONFIG = {
-    formId: '1FAIpQLSf-z5xESgi94JF64E1KQ7vFIuqoOtbQQYKSij4CFwAI-KY0Aw',
-    entries: {
-      serviceName: 'entry.77093322',
-      name: 'entry.1392727185',
-      phone: 'entry.1491459465',
-      email: 'entry.903938955'
-    }
-  };
+  const navigate = useNavigate();
+  const [showQuote,  setShowQuote]  = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted,  setSubmitted]  = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [phoneError, setPhoneError] = useState('');
 
   if (!isOpen || !product) return null;
 
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const isLoggedIn = tokenStorage.isLoggedIn();
+  const userInfo   = tokenStorage.getUserInfo();
+  const fullName   = `${userInfo?.firstName || ''} ${userInfo?.lastName || ''}`.trim();
 
-  const handleQuoteSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  // ── Price — always calculate from raw numbers ──────────────
+  const rawOriginal = product.originalPrice ? Number(product.originalPrice) : null;
+  const rawDiscount = product.discount       ? Number(product.discount)       : 0;
+  const hasPrice    = rawOriginal && rawOriginal > 0;
+  const hasDiscount = rawDiscount > 0;
 
+  let discountedPrice = null;
+  let savedAmount     = null;
+  if (hasPrice && hasDiscount) {
+    discountedPrice = Math.round(rawOriginal * (1 - rawDiscount / 100));
+    savedAmount     = rawOriginal - discountedPrice;
+  }
+
+  const displayPrice = discountedPrice
+    ? `₹${discountedPrice.toLocaleString('en-IN')}`
+    : hasPrice ? `₹${rawOriginal.toLocaleString('en-IN')}` : 'Get Quote!';
+
+  const strikePrice = (hasPrice && hasDiscount)
+    ? `₹${rawOriginal.toLocaleString('en-IN')}` : null;
+
+  // ── Submit ─────────────────────────────────────────────────
+  const handleSubmit = async () => {
+    if (!userInfo) return;
+    const phone  = userInfo.phoneNumber || phoneInput.trim();
+    if (!phone) { setPhoneError('Phone number is required'); return; }
+    const digits = phone.replace(/[^0-9]/g, '');
+    if (digits.length < 10 || digits.length > 15) { setPhoneError('Enter a valid phone number'); return; }
+    setPhoneError('');
+    setSubmitting(true);
     try {
-      // Construct the Google Form submission URL
-      const formUrl = `https://docs.google.com/forms/d/e/${GOOGLE_FORM_CONFIG.formId}/formResponse`;
-      
-      // Create form data
-      const submitData = new FormData();
-      submitData.append(GOOGLE_FORM_CONFIG.entries.serviceName, product.title);
-      submitData.append(GOOGLE_FORM_CONFIG.entries.name, formData.name);
-      submitData.append(GOOGLE_FORM_CONFIG.entries.phone, formData.phone);
-      if (formData.email) {
-        submitData.append(GOOGLE_FORM_CONFIG.entries.email, formData.email);
-      }
-
-      // Submit to Google Forms (using no-cors mode)
-      await fetch(formUrl, {
-        method: 'POST',
-        body: submitData,
-        mode: 'no-cors'
-      });
-
-      // Show success message
-      setIsSubmitted(true);
-      
-      // Reset after 3 seconds
-      setTimeout(() => {
-        setIsSubmitted(false);
-        setShowQuoteForm(false);
-        setFormData({ name: '', phone: '', email: '' });
-        onClose();
-      }, 3000);
-
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      alert('There was an error submitting your request. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+      const fd = new FormData();
+      fd.append(GOOGLE_FORM_CONFIG.entries.serviceName, product.title);
+      fd.append(GOOGLE_FORM_CONFIG.entries.name,  fullName);
+      fd.append(GOOGLE_FORM_CONFIG.entries.phone, phone);
+      fd.append(GOOGLE_FORM_CONFIG.entries.email, userInfo.email || '');
+      await fetch(`https://docs.google.com/forms/d/e/${GOOGLE_FORM_CONFIG.formId}/formResponse`,
+        { method: 'POST', body: fd, mode: 'no-cors' });
+      setSubmitted(true);
+      setTimeout(() => { setSubmitted(false); setShowQuote(false); onClose(); }, 3500);
+    } catch { }
+    finally { setSubmitting(false); }
   };
 
   return (
     <>
-      {/* Backdrop with blur */}
-      <div 
-        className="modal-backdrop"
-        onClick={onClose}
-      />
+      <div className="pd-overlay">
+        <div className="pd-backdrop-click" onClick={onClose} />
 
-      {/* Modal Content */}
-      <div className="modal-container">
-        <div className="modal-content">
-          {/* Close Button */}
-          <button 
-            className="close-button"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <X size={24} />
-          </button>
+        <div className="pd-card">
 
-          {/* Discount Badge (floating) */}
-          {product.discount && (
-            <div className="floating-discount">
-              <Zap size={16} />
-              <span>{product.discount}% OFF</span>
-            </div>
-          )}
+          {/* Close */}
+          <button className="pd-x" onClick={onClose}><X size={18} /></button>
 
-          {/* Product Layout */}
-          <div className="product-layout">
-            {/* Left Side - Product Image */}
-            <div className="product-image-section">
-              <div className="image-container">
-                <div className="image-placeholder">
-                  {product.image ? (
-                    <img src={product.image} alt={product.title} />
-                  ) : (
-                    <div className="no-image">
-                      <ShoppingCart size={48} strokeWidth={1.5} />
-                      <span>Product Image</span>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Image decorative elements */}
-                <div className="image-glow"></div>
-              </div>
-              
-              {/* Trust Badges */}
-              <div className="trust-badges">
-                <div className="badge">
-                  <Shield size={18} />
-                  <span>Secure Payment</span>
-                </div>
-                <div className="badge">
-                  <Truck size={18} />
-                  <span>Fast Delivery</span>
-                </div>
-              </div>
+          {/* ══ LEFT ══ */}
+          <div className="pd-left">
 
-              {/* Additional Info Section */}
-              <div className="additional-info">
-                <div className="info-item">
-                  <Award size={20} />
-                  <div className="info-content">
-                    <span className="info-title">Warranty</span>
-                    <span className="info-value">1 Year Official</span>
-                  </div>
-                </div>
-                <div className="info-item">
-                  <Clock size={20} />
-                  <div className="info-content">
-                    <span className="info-title">Delivery</span>
-                    <span className="info-value">3-5 Business Days</span>
-                  </div>
-                </div>
-                <div className="info-item">
-                  <RefreshCw size={20} />
-                  <div className="info-content">
-                    <span className="info-title">Returns</span>
-                    <span className="info-value">7 Days Easy Return</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Side - Product Details */}
-            <div className="product-details-section">
-              {/* Rating */}
-              <div className="rating-section">
-                <div className="stars">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} size={16} fill="#FCD34D" color="#FCD34D" />
-                  ))}
-                </div>
-                <span className="rating-text">4.8 (2,345 reviews)</span>
-              </div>
-
-              <h2 className="product-title">{product.title}</h2>
-              
-              {/* Price Section with animation */}
-              <div className="price-section">
-                <div className="price-main">
-                  <span className="current-price">{product.price}</span>
-                  {product.originalPrice && (
-                    <span className="original-price">₹{product.originalPrice}</span>
-                  )}
-                </div>
-                {product.discount && (
-                  <div className="savings-badge">
-                    Save ₹{product.originalPrice - parseInt(product.price.replace(/[^\d]/g, ''))}
-                  </div>
-                )}
-              </div>
-
-              {/* Product Overview */}
-              <div className="description-section">
-                <h3 className="section-title">
-                  <div className="title-line"></div>
-                  Product Overview
-                </h3>
-                <p className="description-text">
-                  {product.description || 'No description available for this product.'}
-                </p>
-              </div>
-
-              {/* Specifications */}
-              <div className="features-section">
-                <h3 className="section-title">
-                  <div className="title-line"></div>
-                  What's Included
-                </h3>
-                <ul className="features-list">
-                  <li>
-                    <CheckCircle size={18} />
-                    <span>Premium Quality Materials</span>
-                  </li>
-                  <li>
-                    <CheckCircle size={18} />
-                    <span>Latest Technology</span>
-                  </li>
-                  <li>
-                    <CheckCircle size={18} />
-                    <span>1 Year Warranty</span>
-                  </li>
-                  <li>
-                    <CheckCircle size={18} />
-                    <span>24/7 Customer Support</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Quote Form or Button */}
-              {!showQuoteForm ? (
-                <div className="action-buttons">
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => setShowQuoteForm(true)}
-                  >
-                    <Send size={20} />
-                    Get Quote Now
-                  </button>
-                </div>
+            {/* Image */}
+            <div className="pd-img-box">
+              {hasDiscount && (
+                <div className="pd-badge"><Zap size={11} fill="white" strokeWidth={0} />{rawDiscount}% OFF</div>
+              )}
+              {product.image ? (
+                <img src={product.image} alt={product.title} className="pd-img" />
               ) : (
-                <div className="quote-form-container">
-                  {!isSubmitted ? (
-                    <>
-                      <h3 className="form-title">Request a Quote</h3>
-                      <form onSubmit={handleQuoteSubmit} className="quote-form">
-                        {/* Service Name (pre-filled, read-only) */}
-                        <div className="form-group">
-                          <label>Service</label>
-                          <input
-                            type="text"
-                            value={product.title}
-                            readOnly
-                            className="readonly-input"
-                          />
-                        </div>
+                <div className="pd-img-empty"><ImageIcon size={52} strokeWidth={1} /><span>No Image</span></div>
+              )}
+            </div>
 
-                        {/* Name */}
-                        <div className="form-group">
-                          <label>Full Name *</label>
-                          <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="John Doe"
-                          />
-                        </div>
-
-                        {/* Phone */}
-                        <div className="form-group">
-                          <label>Phone Number *</label>
-                          <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="+91 98765 43210"
-                            pattern="[0-9+\s-]+"
-                          />
-                        </div>
-
-                        {/* Email (Optional) */}
-                        <div className="form-group">
-                          <label>Email (Optional)</label>
-                          <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            placeholder="john@example.com"
-                          />
-                        </div>
-
-                        {/* Form Buttons */}
-                        <div className="form-buttons">
-                          <button
-                            type="button"
-                            className="btn btn-cancel"
-                            onClick={() => {
-                              setShowQuoteForm(false);
-                              setFormData({ name: '', phone: '', email: '' });
-                            }}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="submit"
-                            className="btn btn-submit"
-                            disabled={isSubmitting}
-                          >
-                            {isSubmitting ? (
-                              <>
-                                <div className="spinner"></div>
-                                Submitting...
-                              </>
-                            ) : (
-                              <>
-                                <Send size={18} />
-                                Submit Request
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </form>
-                    </>
-                  ) : (
-                    <div className="success-message">
-                      <CheckCircle size={64} className="success-icon" />
-                      <h3>Thank You!</h3>
-                      <p>We'll get back to you within 24 hours</p>
-                    </div>
-                  )}
+            {/* Price */}
+            <div className="pd-price-block">
+              <div className="pd-price-row">
+                <span className="pd-price">{displayPrice}</span>
+                {strikePrice && <span className="pd-strike">{strikePrice}</span>}
+              </div>
+              {savedAmount && savedAmount > 0 && (
+                <div className="pd-save-pill">
+                  <Tag size={10} />
+                  Save ₹{savedAmount.toLocaleString('en-IN')} ({rawDiscount}% off)
                 </div>
               )}
             </div>
+
+            {/* Rating */}
+            <div className="pd-rating">
+              {[1,2,3,4,5].map(s => <Star key={s} size={14} fill="#F59E0B" color="#F59E0B" />)}
+              <span className="pd-rating-n">4.8</span>
+              <span className="pd-rating-c">· 2,345 reviews</span>
+            </div>
+
+            {/* Highlights */}
+            <div className="pd-highlights">
+              <div className="pd-hl"><Shield  size={15} /><div><strong>Secure Payment</strong><span>100% safe & encrypted</span></div></div>
+              <div className="pd-hl"><Award   size={15} /><div><strong>1 Year Warranty</strong><span>Official guarantee</span></div></div>
+              <div className="pd-hl"><Clock   size={15} /><div><strong>3–5 Days Delivery</strong><span>Fast turnaround</span></div></div>
+              <div className="pd-hl"><ThumbsUp size={15} /><div><strong>Verified Service</strong><span>Quality assured</span></div></div>
+              <div className="pd-hl"><MapPin  size={15} /><div><strong>Pan India</strong><span>Available everywhere</span></div></div>
+            </div>
+
+          </div>
+
+          {/* ══ RIGHT ══ */}
+          <div className="pd-right">
+
+            {product.category && <span className="pd-cat">{product.category}</span>}
+
+            <h1 className="pd-title">{product.title}</h1>
+
+            {/* Price — mobile only */}
+            <div className="pd-price-mobile">
+              <span className="pd-price">{displayPrice}</span>
+              {strikePrice && <span className="pd-strike">{strikePrice}</span>}
+              {savedAmount && savedAmount > 0 && (
+                <span className="pd-save-pill"><Tag size={9} />Save ₹{savedAmount.toLocaleString('en-IN')}</span>
+              )}
+            </div>
+
+            <div className="pd-sep" />
+
+            <p className="pd-section-lbl">About this service</p>
+            <p className="pd-desc">{product.description || 'No description available.'}</p>
+
+            <div className="pd-sep" />
+
+            {/* Service perks */}
+            <div className="pd-perks">
+              <div className="pd-perk"><CheckCircle size={14} /><span>Premium quality materials</span></div>
+              <div className="pd-perk"><CheckCircle size={14} /><span>Expert professionals</span></div>
+              <div className="pd-perk"><CheckCircle size={14} /><span>Timely delivery guaranteed</span></div>
+              <div className="pd-perk"><CheckCircle size={14} /><span>Post-service support</span></div>
+            </div>
+
+            <div className="pd-sep" />
+
+            {/* ── Quote states ── */}
+            {!showQuote && (
+              <div className="pd-cta">
+                <button className="pd-btn-cta" onClick={() => setShowQuote(true)}>
+                  <Send size={17} /> Get Your Quote <ArrowRight size={16} />
+                </button>
+                <p className="pd-cta-note">Free consultation · No commitment required</p>
+              </div>
+            )}
+
+            {showQuote && !isLoggedIn && (
+              <div className="pd-box pd-box--blue">
+                <div className="pd-box-top">
+                  <div className="pd-box-ico pd-box-ico--blue"><LogIn size={20} /></div>
+                  <div>
+                    <h4>Login to get a quote</h4>
+                    <p>We'll use your saved details — no form needed</p>
+                  </div>
+                </div>
+                <div className="pd-box-btns">
+                  <button className="pd-btn-ghost" onClick={() => setShowQuote(false)}>Back</button>
+                  <button className="pd-btn-primary" onClick={() => { onClose(); navigate('/login'); }}>
+                    <LogIn size={13} /> Login Now
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showQuote && isLoggedIn && !submitted && (
+              <div className="pd-box pd-box--white">
+                <div className="pd-box-top">
+                  <div className="pd-box-ico pd-box-ico--red"><Send size={18} /></div>
+                  <div>
+                    <h4>Get Your Quote</h4>
+                    <p>For: <strong>{product.title}</strong></p>
+                  </div>
+                </div>
+                <div className="pd-info-list">
+                  <div className="pd-info-row">
+                    <span className="pd-info-ico"><User size={12} /></span>
+                    <span className="pd-info-k">Name</span>
+                    <span className="pd-info-v">{fullName || '—'}</span>
+                  </div>
+                  <div className="pd-info-row">
+                    <span className="pd-info-ico"><Mail size={12} /></span>
+                    <span className="pd-info-k">Email</span>
+                    <span className="pd-info-v">{userInfo?.email || '—'}</span>
+                  </div>
+                  <div className="pd-info-row">
+                    <span className="pd-info-ico"><Phone size={12} /></span>
+                    <span className="pd-info-k">Phone</span>
+                    {userInfo?.phoneNumber ? (
+                      <span className="pd-info-v">{userInfo.phoneNumber}</span>
+                    ) : (
+                      <div className="pd-ph-wrap">
+                        <input
+                          className={`pd-ph${phoneError ? ' pd-ph--err' : ''}`}
+                          type="tel" placeholder="Enter phone number"
+                          value={phoneInput}
+                          onChange={e => { setPhoneInput(e.target.value); setPhoneError(''); }}
+                        />
+                        {phoneError && <span className="pd-ph-err">{phoneError}</span>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="pd-box-btns">
+                  <button className="pd-btn-ghost" onClick={() => setShowQuote(false)} disabled={submitting}>Cancel</button>
+                  <button className="pd-btn-primary" onClick={handleSubmit} disabled={submitting}>
+                    {submitting ? <><span className="pd-spin" />Sending...</> : <><Send size={13} />Send Request</>}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showQuote && isLoggedIn && submitted && (
+              <div className="pd-success">
+                <div className="pd-success-ring"><CheckCircle size={36} /></div>
+                <h4>Quote Request Sent!</h4>
+                <p>Our team will contact you within 24 hours</p>
+              </div>
+            )}
+
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        .modal-backdrop {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.5));
-          backdrop-filter: blur(10px);
-          z-index: 10000;
-          animation: fadeIn 0.3s ease-out;
+        /* Overlay — above everything */
+        .pd-overlay {
+          position: fixed; inset: 0; z-index: 99999;
+          display: flex; align-items: center; justify-content: center;
+          padding: 16px;
+          background: rgba(2,6,23,0.8);
+          animation: pdFade .2s ease;
+        }
+        @keyframes pdFade { from{opacity:0} to{opacity:1} }
+        .pd-backdrop-click { position:absolute; inset:0; z-index:0; }
+
+        /* Card — 80% of screen */
+        .pd-card {
+          position: relative; z-index: 1;
+          width: 80vw; max-width: 1100px;
+          height: 82vh; max-height: 820px;
+          display: grid; grid-template-columns: 320px 1fr;
+          background: #fff; border-radius: 24px; overflow: hidden;
+          box-shadow: 0 32px 80px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.2);
+          animation: pdUp .3s cubic-bezier(.34,1.2,.64,1);
+        }
+        @keyframes pdUp {
+          from{opacity:0;transform:translateY(18px) scale(.97)}
+          to  {opacity:1;transform:translateY(0)    scale(1)}
         }
 
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+        /* Close */
+        .pd-x {
+          position:absolute; top:14px; right:14px; z-index:20;
+          width:34px; height:34px; border-radius:50%;
+          background:#fff; border:1px solid #e5e7eb;
+          box-shadow:0 2px 6px rgba(0,0,0,.1);
+          cursor:pointer; display:flex; align-items:center; justify-content:center;
+          color:#6b7280; transition:all .16s;
         }
+        .pd-x:hover { background:#fee2e2; color:#dc2626; transform:rotate(90deg); border-color:#fca5a5; }
 
-        .modal-container {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: 75%;
-          max-width: 1200px;
-          max-height: 90vh;
-          z-index: 10001;
-          animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translate(-50%, -45%) scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-          }
-        }
-
-        .modal-content {
-          background: white;
-          border-radius: 20px;
-          box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
-          position: relative;
-          overflow: hidden;
-          max-height: 90vh;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .close-button {
-          position: absolute;
-          top: 20px;
-          right: 20px;
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          border: none;
-          background: rgba(255, 255, 255, 0.95);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 10;
-          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .close-button:hover {
-          background: #fee;
-          transform: rotate(90deg) scale(1.1);
-          box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
-        }
-
-        .close-button:hover :global(svg) {
-          color: #ef4444;
-        }
-
-        .floating-discount {
-          position: absolute;
-          top: 20px;
-          left: 20px;
-          background: linear-gradient(135deg, #ef4444, #dc2626);
-          color: white;
-          padding: 0.75rem 1.25rem;
-          border-radius: 50px;
-          font-size: 0.875rem;
-          font-weight: 700;
-          z-index: 10;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-
-        .product-layout {
-          display: grid;
-          grid-template-columns: 1fr 1.5fr;
-          gap: 3rem;
-          padding: 3rem;
+        /* ══ LEFT ══ */
+        .pd-left {
+          background: #f8fafc;
+          border-right: 1px solid #e9ecef;
+          display: flex; flex-direction: column; gap: 14px;
+          padding: 24px 20px;
           overflow-y: auto;
         }
 
-        .product-image-section {
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
+        .pd-img-box {
+          position:relative; width:100%; aspect-ratio:1;
+          border-radius:16px; overflow:hidden; background:#e9ecef; flex-shrink:0;
+          box-shadow:0 4px 14px rgba(0,0,0,.1);
+        }
+        .pd-img { width:100%; height:100%; object-fit:cover; transition:transform .5s; }
+        .pd-img-box:hover .pd-img { transform:scale(1.04); }
+        .pd-img-empty {
+          width:100%; height:100%; display:flex; flex-direction:column;
+          align-items:center; justify-content:center; gap:8px; color:#9ca3af; font-size:12px;
+        }
+        .pd-badge {
+          position:absolute; top:10px; left:10px; z-index:2;
+          background:linear-gradient(135deg,#EC1940,#F89C1C);
+          color:white; padding:4px 10px; border-radius:999px;
+          font-size:11px; font-weight:800;
+          display:flex; align-items:center; gap:4px;
+          box-shadow:0 3px 10px rgba(236,25,64,.4);
         }
 
-        .image-container {
-          position: relative;
+        .pd-price-block {
+          background:white; border-radius:12px;
+          border:1px solid #e9ecef; padding:12px 14px;
+        }
+        .pd-price-row { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+        .pd-price { font-size:26px; font-weight:800; color:#059669; letter-spacing:-.5px; }
+        .pd-strike { font-size:14px; color:#9ca3af; text-decoration:line-through; }
+        .pd-save-pill {
+          display:inline-flex; align-items:center; gap:5px; margin-top:6px;
+          background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0;
+          padding:3px 9px; border-radius:8px; font-size:11px; font-weight:700;
         }
 
-        .image-placeholder {
-          width: 100%;
-          aspect-ratio: 1;
-          border-radius: 16px;
-          border: 2px solid #e5e7eb;
-          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          overflow: hidden;
-          position: relative;
-          transition: all 0.3s ease;
+        .pd-rating {
+          display:flex; align-items:center; gap:4px;
+          padding:9px 12px; background:white; border-radius:10px; border:1px solid #e9ecef;
+        }
+        .pd-rating-n { font-size:13px; font-weight:700; color:#1f2937; }
+        .pd-rating-c { font-size:11.5px; color:#9ca3af; }
+
+        /* Highlights — replaces separate trust + stats */
+        .pd-highlights {
+          background:white; border-radius:12px;
+          border:1px solid #e9ecef; padding:12px 14px;
+          display:flex; flex-direction:column; gap:10px;
+        }
+        .pd-hl {
+          display:flex; align-items:flex-start; gap:10px;
+        }
+        .pd-hl svg { color:#EC1940; flex-shrink:0; margin-top:1px; }
+        .pd-hl div { display:flex; flex-direction:column; gap:1px; }
+        .pd-hl strong { font-size:12px; font-weight:700; color:#1f2937; }
+        .pd-hl span   { font-size:11px; color:#9ca3af; }
+
+        /* ══ RIGHT ══ */
+        .pd-right {
+          padding:32px 36px 28px;
+          overflow-y:auto; display:flex; flex-direction:column;
+          background:#fff;
         }
 
-        .image-placeholder:hover {
-          transform: scale(1.02);
-          border-color: #2563eb;
+        .pd-cat {
+          display:inline-flex; align-self:flex-start;
+          background:#FFF1F2; color:#E11D48; border:1px solid #FECDD3;
+          padding:3px 10px; border-radius:999px;
+          font-size:10px; font-weight:700;
+          text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px;
         }
 
-        .image-placeholder img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.5s ease;
+        .pd-title {
+          font-size:30px; font-weight:800; color:#0d1117;
+          line-height:1.2; letter-spacing:-.5px; margin:0 0 14px;
         }
 
-        .image-placeholder:hover img {
-          transform: scale(1.1);
+        /* Mobile price — hidden on desktop */
+        .pd-price-mobile { display:none; }
+
+        .pd-sep { height:1px; background:#f1f5f9; margin-bottom:16px; }
+
+        .pd-section-lbl {
+          font-size:10px; font-weight:700; color:#94a3b8;
+          text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px;
+        }
+        .pd-desc {
+          font-size:15px; line-height:1.85; color:#475569;
+          margin:0 0 14px; white-space:pre-line;
         }
 
-        .no-image {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.75rem;
-          color: #9ca3af;
+        /* Perks */
+        .pd-perks {
+          display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;
         }
-
-        .no-image span {
-          font-size: 1rem;
-          font-weight: 500;
+        .pd-perk {
+          display:flex; align-items:center; gap:7px;
+          padding:8px 12px; background:#f8fafc;
+          border:1px solid #e9ecef; border-radius:9px;
+          font-size:12.5px; font-weight:600; color:#374151;
         }
+        .pd-perk svg { color:#059669; flex-shrink:0; }
 
-        .image-glow {
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
-          animation: glow 3s ease-in-out infinite;
-          pointer-events: none;
+        /* CTA */
+        .pd-cta { margin-top:auto; }
+        .pd-btn-cta {
+          width:100%; padding:16px 24px;
+          background:linear-gradient(135deg,#EC1940 0%,#F89C1C 100%);
+          color:#fff; border:none; border-radius:14px;
+          font-size:17px; font-weight:800;
+          cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;
+          box-shadow:0 8px 24px rgba(236,25,64,.3);
+          transition:all .2s; font-family:inherit;
         }
+        .pd-btn-cta:hover { transform:translateY(-2px); box-shadow:0 14px 32px rgba(236,25,64,.4); }
+        .pd-cta-note { text-align:center; font-size:11.5px; color:#94a3b8; margin:8px 0 0; }
 
-        @keyframes glow {
-          0%, 100% { transform: scale(1); opacity: 0.5; }
-          50% { transform: scale(1.2); opacity: 0.8; }
+        /* Box */
+        .pd-box {
+          margin-top:auto; border-radius:16px; padding:18px;
+          display:flex; flex-direction:column; gap:12px;
+          animation:pdBoxIn .22s ease;
         }
+        @keyframes pdBoxIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        .pd-box--blue  { background:#F0F9FF; border:1.5px solid #BAE6FD; }
+        .pd-box--white { background:#f8fafc; border:1.5px solid #e2e8f0; }
 
-        .trust-badges {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 0.75rem;
+        .pd-box-top { display:flex; gap:12px; align-items:flex-start; }
+        .pd-box-ico {
+          width:42px; height:42px; border-radius:11px; flex-shrink:0;
+          display:flex; align-items:center; justify-content:center; color:white;
         }
+        .pd-box-ico--blue { background:linear-gradient(135deg,#0EA5E9,#0284C7); }
+        .pd-box-ico--red  { background:linear-gradient(135deg,#EC1940,#F89C1C); }
+        .pd-box-top h4 { font-size:14px; font-weight:800; color:#0d1117; margin:0 0 2px; }
+        .pd-box-top p  { font-size:12px; color:#64748b; margin:0; }
+        .pd-box-top p strong { color:#0d1117; }
 
-        .badge {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem;
-          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-          border: 1px solid #bbf7d0;
-          border-radius: 10px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: #166534;
-          transition: all 0.3s ease;
+        .pd-info-list { background:white; border-radius:10px; border:1px solid #e2e8f0; overflow:hidden; }
+        .pd-info-row {
+          display:flex; align-items:center; gap:9px;
+          padding:9px 12px; border-bottom:1px solid #f8fafc;
         }
-
-        .badge:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+        .pd-info-row:last-child { border-bottom:none; }
+        .pd-info-ico {
+          width:22px; height:22px; border-radius:6px; background:#f1f5f9;
+          display:flex; align-items:center; justify-content:center; color:#64748b; flex-shrink:0;
         }
-
-        .additional-info {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-          padding: 1.25rem;
-          background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
-          border-radius: 12px;
-          border: 1px solid #fde047;
+        .pd-info-k {
+          font-size:10px; font-weight:700; color:#94a3b8;
+          text-transform:uppercase; letter-spacing:.05em; min-width:36px; flex-shrink:0;
         }
+        .pd-info-v { font-size:13px; font-weight:600; color:#0d1117; flex:1; word-break:break-all; }
 
-        .info-item {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.75rem;
-          background: white;
-          border-radius: 8px;
-          transition: all 0.3s ease;
+        .pd-ph-wrap { flex:1; display:flex; flex-direction:column; gap:3px; }
+        .pd-ph {
+          width:100%; padding:5px 9px; border:1.5px solid #e2e8f0; border-radius:7px;
+          font-size:13px; font-family:inherit; outline:none; color:#0d1117;
+          transition:border-color .15s; box-sizing:border-box;
         }
+        .pd-ph:focus { border-color:#EC1940; box-shadow:0 0 0 3px rgba(236,25,64,.08); }
+        .pd-ph--err  { border-color:#dc2626 !important; }
+        .pd-ph-err   { font-size:11px; color:#dc2626; }
 
-        .info-item:hover {
-          transform: translateX(4px);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        .pd-box-btns { display:flex; gap:8px; }
+        .pd-btn-ghost {
+          padding:10px 16px; border-radius:10px;
+          border:1.5px solid #e2e8f0; background:white;
+          color:#64748b; font-size:13px; font-weight:600;
+          cursor:pointer; transition:all .15s; font-family:inherit;
         }
-
-        .info-item :global(svg) {
-          color: #ca8a04;
-          flex-shrink: 0;
+        .pd-btn-ghost:hover { background:#f8fafc; }
+        .pd-btn-ghost:disabled { opacity:.5; cursor:not-allowed; }
+        .pd-btn-primary {
+          flex:1; padding:10px 16px; border-radius:10px;
+          background:linear-gradient(135deg,#EC1940,#F89C1C);
+          color:white; border:none; font-size:13px; font-weight:700;
+          cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+          box-shadow:0 4px 12px rgba(236,25,64,.25); transition:all .15s; font-family:inherit;
         }
+        .pd-btn-primary:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 6px 18px rgba(236,25,64,.35); }
+        .pd-btn-primary:disabled { opacity:.6; cursor:not-allowed; }
 
-        .info-content {
-          display: flex;
-          flex-direction: column;
-          gap: 0.125rem;
+        .pd-spin {
+          width:12px; height:12px; border-radius:50%;
+          border:2px solid rgba(255,255,255,.3); border-top-color:white;
+          animation:pdSpin .55s linear infinite; display:inline-block;
         }
+        @keyframes pdSpin { to{transform:rotate(360deg)} }
 
-        .info-title {
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: #78716c;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
+        .pd-success {
+          margin-top:auto; display:flex; flex-direction:column; align-items:center;
+          text-align:center; gap:8px; padding:20px;
+          background:linear-gradient(135deg,#f0fdf4,#dcfce7);
+          border:1.5px solid #86efac; border-radius:16px;
+          animation:pdScaleIn .36s cubic-bezier(.34,1.3,.64,1);
         }
-
-        .info-value {
-          font-size: 0.875rem;
-          font-weight: 700;
-          color: #1a1a1a;
+        @keyframes pdScaleIn { from{opacity:0;transform:scale(.88)} to{opacity:1;transform:scale(1)} }
+        .pd-success-ring {
+          width:64px; height:64px; border-radius:50%;
+          background:linear-gradient(135deg,#059669,#10b981);
+          display:flex; align-items:center; justify-content:center;
+          color:white; box-shadow:0 8px 20px rgba(5,150,105,.3);
         }
+        .pd-success h4 { font-size:17px; font-weight:800; color:#0d1117; margin:0; }
+        .pd-success p  { font-size:13px; color:#64748b; margin:0; }
 
-        .product-details-section {
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-        }
-
-        .rating-section {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          animation: slideInRight 0.5s ease-out 0.1s both;
-        }
-
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        .stars {
-          display: flex;
-          gap: 0.25rem;
-        }
-
-        .rating-text {
-          font-size: 0.875rem;
-          color: #6b7280;
-          font-weight: 500;
-        }
-
-        .product-title {
-          font-size: 2.25rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, #1a1a1a 0%, #374151 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin: 0;
-          line-height: 1.2;
-          animation: slideInRight 0.5s ease-out 0.2s both;
-        }
-
-        .price-section {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-          padding: 1.25rem;
-          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-          border-left: 4px solid #059669;
-          border-radius: 12px;
-          animation: slideInRight 0.5s ease-out 0.3s both;
-        }
-
-        .price-main {
-          display: flex;
-          align-items: baseline;
-          gap: 1rem;
-        }
-
-        .current-price {
-          font-size: 2.25rem;
-          font-weight: 800;
-          color: #059669;
-          animation: pricePopIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s both;
-        }
-
-        @keyframes pricePopIn {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
+        /* ══ RESPONSIVE ══ */
+        @media (max-width: 900px) {
+          .pd-card {
+            width: 94vw;
+            grid-template-columns: 260px 1fr;
           }
         }
 
-        .original-price {
-          font-size: 1.25rem;
-          color: #6b7280;
-          text-decoration: line-through;
-        }
-
-        .savings-badge {
-          display: inline-block;
-          background: #059669;
-          color: white;
-          padding: 0.5rem 1rem;
-          border-radius: 20px;
-          font-size: 0.875rem;
-          font-weight: 700;
-          align-self: flex-start;
-        }
-
-        .description-section {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-          animation: slideInRight 0.5s ease-out 0.4s both;
-        }
-
-        .section-title {
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: #1a1a1a;
-          margin: 0;
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-
-        .title-line {
-          width: 4px;
-          height: 24px;
-          background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
-          border-radius: 2px;
-        }
-
-        .description-text {
-          font-size: 1rem;
-          line-height: 1.7;
-          color: #4b5563;
-          margin: 0;
-          white-space: pre-line;
-        }
-
-        .features-section {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-          animation: slideInRight 0.5s ease-out 0.5s both;
-        }
-
-        .features-list {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 0.75rem;
-          margin: 0;
-          padding: 0;
-          list-style: none;
-        }
-
-        .features-list li {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.875rem 1rem;
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: #374151;
-          transition: all 0.3s ease;
-        }
-
-        .features-list li :global(svg) {
-          color: #2563eb;
-          flex-shrink: 0;
-        }
-
-        .features-list li span {
-          flex: 1;
-        }
-
-        .features-list li:hover {
-          transform: translateX(4px);
-          background: #eff6ff;
-          border-color: #2563eb;
-        }
-
-        .action-buttons {
-          display: flex;
-          gap: 1rem;
-          margin-top: auto;
-          padding-top: 1.5rem;
-          animation: slideInRight 0.5s ease-out 0.6s both;
-        }
-
-        .btn {
-          flex: 1;
-          padding: 1.125rem 1.75rem;
-          border-radius: 12px;
-          font-size: 1rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-          border: none;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-        }
-
-        .btn-primary {
-          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-          color: white;
-          box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-        }
-
-        .btn-primary:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5);
-        }
-
-        .btn-primary:active {
-          transform: translateY(-1px);
-        }
-
-        /* Quote Form Styles */
-        .quote-form-container {
-          background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-          border: 2px solid #38bdf8;
-          border-radius: 12px;
-          padding: 1.25rem;
-          margin-top: auto;
-          animation: slideInUp 0.4s ease-out;
-        }
-
-        @keyframes slideInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .form-title {
-          font-size: 1.125rem;
-          font-weight: 700;
-          color: #0c4a6e;
-          margin: 0 0 1rem 0;
-          text-align: center;
-        }
-
-        .quote-form {
-          display: flex;
-          flex-direction: column;
-          gap: 0.875rem;
-        }
-
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.375rem;
-        }
-
-        .form-group label {
-          font-size: 0.8125rem;
-          font-weight: 600;
-          color: #0c4a6e;
-        }
-
-        .form-group input {
-          padding: 0.625rem 0.875rem;
-          border: 2px solid #bae6fd;
-          border-radius: 6px;
-          font-size: 0.9375rem;
-          transition: all 0.3s ease;
-          background: white;
-        }
-
-        .form-group input:focus {
-          outline: none;
-          border-color: #0ea5e9;
-          box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-        }
-
-        .readonly-input {
-          background: #f0f9ff !important;
-          color: #0c4a6e;
-          font-weight: 600;
-          cursor: not-allowed;
-        }
-
-        .form-buttons {
-          display: grid;
-          grid-template-columns: 1fr 2fr;
-          gap: 0.75rem;
-          margin-top: 0.25rem;
-        }
-
-        .btn-cancel {
-          background: white;
-          color: #64748b;
-          border: 2px solid #e2e8f0;
-          padding: 0.625rem 0.875rem;
-          border-radius: 6px;
-          font-size: 0.875rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .btn-cancel:hover {
-          background: #f8fafc;
-          border-color: #cbd5e1;
-        }
-
-        .btn-submit {
-          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-          color: white;
-          border: none;
-          padding: 0.625rem 0.875rem;
-          border-radius: 6px;
-          font-size: 0.875rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
-        }
-
-        .btn-submit:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
-        }
-
-        .btn-submit:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-
-        .spinner {
-          width: 16px;
-          height: 16px;
-          border: 2px solid rgba(255, 255, 255, 0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        .success-message {
-          text-align: center;
-          padding: 2rem 1.5rem;
-          animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        .success-icon {
-          color: #059669;
-          margin-bottom: 0.75rem;
-          animation: checkmark 0.8s ease-out;
-        }
-
-        @keyframes checkmark {
-          0% {
-            transform: scale(0) rotate(0deg);
-            opacity: 0;
-          }
-          50% {
-            transform: scale(1.2) rotate(180deg);
-          }
-          100% {
-            transform: scale(1) rotate(360deg);
-            opacity: 1;
-          }
-        }
-
-        .success-message h3 {
-          font-size: 1.375rem;
-          font-weight: 700;
-          color: #059669;
-          margin: 0 0 0.5rem 0;
-        }
-
-        .success-message p {
-          font-size: 1rem;
-          color: #4b5563;
-          margin: 0;
-        }
-
-        /* Tablet Styles */
-        @media (max-width: 1024px) {
-          .modal-container {
-            width: 85%;
-          }
-
-          .product-layout {
-            gap: 2rem;
-            padding: 2rem;
-          }
-
-          .product-title {
-            font-size: 1.875rem;
-          }
-        }
-
-        /* Mobile Styles */
-        @media (max-width: 768px) {
-          .modal-container {
-            width: 96%;
-            max-height: 88vh;
-            top: 50%;
-            transform: translate(-50%, -50%);
-          }
-
-          .modal-content {
-            max-height: 88vh;
-            border-radius: 16px;
-          }
-
-          .product-layout {
+        @media (max-width: 700px) {
+          .pd-card {
             grid-template-columns: 1fr;
-            gap: 1.5rem;
-            padding: 1rem;
-            padding-top: 3.5rem;
+            width: 96vw; height: 92vh; max-height: 100%;
+            border-radius: 20px; overflow-y: auto;
           }
-
-          .product-title {
-            font-size: 1.5rem;
+          .pd-left {
+            flex-direction: row; flex-wrap: wrap; gap: 10px;
+            padding: 14px; border-right: none; border-bottom: 1px solid #e9ecef;
           }
-
-          .current-price {
-            font-size: 1.75rem;
-          }
-
-          .features-list {
-            grid-template-columns: 1fr;
-          }
-
-          .action-buttons {
-            flex-direction: column;
-          }
-
-          .btn {
-            width: 100%;
-          }
-
-          .floating-discount {
-            top: 12px;
-            left: 12px;
-            padding: 0.5rem 1rem;
-            font-size: 0.75rem;
-          }
-
-          .close-button {
-            top: 12px;
-            right: 12px;
-            width: 40px;
-            height: 40px;
-          }
-
-          .trust-badges {
-            grid-template-columns: 1fr;
-          }
-
-          .image-placeholder {
-            border-radius: 12px;
-          }
-
-          .additional-info {
-            padding: 1rem;
-          }
-
-          .quote-form-container {
-            padding: 1rem;
-          }
-
-          .form-title {
-            font-size: 1rem;
-          }
-
-          .form-group input {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.875rem;
-          }
-
-          .form-buttons {
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
-          }
-
-          .btn-cancel,
-          .btn-submit {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.8125rem;
-          }
-
-          .success-message {
-            padding: 1.5rem 1rem;
-          }
-
-          .success-icon {
-            width: 48px;
-            height: 48px;
-          }
-
-          .success-message h3 {
-            font-size: 1.125rem;
-          }
-
-          .success-message p {
-            font-size: 0.875rem;
-          }
+          .pd-img-box { width:110px; height:110px; aspect-ratio:unset; border-radius:12px; flex-shrink:0; }
+          .pd-price-block { flex:1; min-width:150px; }
+          .pd-rating, .pd-highlights { flex:1 0 100%; }
+          .pd-right { padding:18px 18px 22px; }
+          .pd-title { font-size:20px; }
+          .pd-perks { grid-template-columns: 1fr; }
         }
 
-        /* Small Mobile */
-        @media (max-width: 480px) {
-          .modal-container {
-            width: 100%;
-            max-height: 100%;
-            height: 100vh;
-            top: 0;
-            left: 0;
-            transform: none;
-            border-radius: 0;
+        @media (max-width: 540px) {
+          .pd-overlay { padding:0; align-items:flex-end; }
+          .pd-card {
+            width:100%; border-radius:22px 22px 0 0;
+            height:94vh; max-height:100%;
           }
-
-          .modal-content {
-            border-radius: 0;
-            max-height: 100vh;
-            height: 100vh;
+          .pd-left { flex-direction:column; padding:0; gap:0; }
+          .pd-img-box { width:100%; aspect-ratio:16/7; height:auto; border-radius:0; }
+          .pd-price-block, .pd-rating, .pd-highlights { margin:0 14px; }
+          .pd-left { padding-bottom:12px; gap:10px; }
+          .pd-right { padding:14px 16px 24px; }
+          .pd-title { font-size:19px; }
+          .pd-price-mobile {
+            display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
+            margin-bottom:10px;
           }
-
-          .product-layout {
-            padding: 0.75rem;
-            padding-top: 3.5rem;
-            gap: 1rem;
-          }
-
-          .floating-discount {
-            top: 8px;
-            left: 8px;
-            padding: 0.4rem 0.75rem;
-            font-size: 0.7rem;
-          }
-
-          .close-button {
-            top: 8px;
-            right: 8px;
-            width: 36px;
-            height: 36px;
-          }
-
-          .close-button :global(svg) {
-            width: 20px;
-            height: 20px;
-          }
-
-          .quote-form-container {
-            padding: 0.875rem;
-          }
-
-          .form-title {
-            font-size: 0.9375rem;
-          }
-
-          .form-group {
-            gap: 0.25rem;
-          }
-
-          .form-group label {
-            font-size: 0.75rem;
-          }
-
-          .form-group input {
-            padding: 0.5rem 0.625rem;
-            font-size: 0.8125rem;
-          }
-
-          .success-message {
-            padding: 1.25rem 0.875rem;
-          }
-
-          .success-icon {
-            width: 40px;
-            height: 40px;
-          }
-        }
-
-        /* Safe area for notched devices */
-        @supports (padding: max(0px)) {
-          @media (max-width: 768px) {
-            .modal-content {
-              padding-top: max(0px, env(safe-area-inset-top));
-              padding-bottom: max(0px, env(safe-area-inset-bottom));
-            }
-          }
+          .pd-price-block { display:none; }
+          .pd-highlights { display:none; }
+          .pd-box-btns { flex-direction:column; }
+          .pd-btn-ghost, .pd-btn-primary { width:100%; }
         }
       `}</style>
     </>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import servicesData from '../../../public/services/servicesData.json';
+import { getAllCategories } from '../../Services/Categoryapi';
 
 // Custom hook for responsive behavior
 const useMediaQuery = (query) => {
@@ -11,7 +11,6 @@ const useMediaQuery = (query) => {
   React.useEffect(() => {
     const mediaQuery = window.matchMedia(query);
     const handler = (event) => setMatches(event.matches);
-    
     mediaQuery.addEventListener('change', handler);
     return () => mediaQuery.removeEventListener('change', handler);
   }, [query]);
@@ -31,33 +30,32 @@ const CategoryNav = () => {
   const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const scrollContainerRef = React.useRef(null);
+  const [categories, setCategories] = React.useState([]);
+  const [hoveredId, setHoveredId] = React.useState(null);
 
-  // Extract unique categories from servicesData
-  const getUniqueCategories = () => {
-    const categoriesSet = new Set();
-    servicesData.services.forEach(service => {
-      if (service.category) {
-        categoriesSet.add(service.category);
+  // ✅ Load categories from API
+  React.useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await getAllCategories();
+        // Map to the shape this component needs
+        const mapped = data.map((cat) => ({
+          id: cat.id,
+          name: cat.name,
+          icon: `/assets/icons/${cat.name.toLowerCase().replace(/\s+/g, '-')}.png`,
+        }));
+        setCategories(mapped);
+      } catch (err) {
+        console.error('CategoryNav: failed to load categories', err);
       }
-    });
-    
-    // Convert to array and map to category objects
-    return Array.from(categoriesSet).map((categoryName, index) => ({
-      id: index + 1,
-      name: categoryName,
-      // Generate icon path based on category name (lowercase, replace spaces with hyphens)
-      icon: `/assets/icons/${categoryName.toLowerCase().replace(/\s+/g, '-')}.png`,
-    }));
-  };
-
-  const categories = getUniqueCategories();
+    };
+    loadCategories();
+  }, []);
 
   const handleCategoryClick = (categoryName) => {
-    // Navigate to services page with category filter
     navigate('/services', { state: { selectedCategory: categoryName } });
   };
 
-  // Enhanced styles with modern CSS
   const styles = {
     categoryNavWrapper: {
       width: '100%',
@@ -85,7 +83,6 @@ const CategoryNav = () => {
       overflowY: 'hidden',
       scrollBehavior: 'smooth',
       WebkitOverflowScrolling: 'touch',
-      // Hide scrollbar but keep functionality
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
     },
@@ -136,18 +133,13 @@ const CategoryNav = () => {
     },
   };
 
-  const [hoveredId, setHoveredId] = React.useState(null);
-
   return (
     <div style={styles.categoryNavWrapper}>
       <div style={styles.categoryNav}>
-        <div 
-          ref={scrollContainerRef}
-          style={styles.categoryNavContainer}
-        >
+        <div ref={scrollContainerRef} style={styles.categoryNavContainer}>
           {categories.map((category, index) => {
             const isHovered = hoveredId === category.id;
-            
+
             return (
               <div
                 key={category.id}
@@ -162,10 +154,8 @@ const CategoryNav = () => {
                 onClick={() => handleCategoryClick(category.name)}
                 onMouseEnter={() => setHoveredId(category.id)}
                 onMouseLeave={() => setHoveredId(null)}
-                onTouchStart={() => !isMobile && setHoveredId(category.id)}
-                onTouchEnd={() => !isMobile && setHoveredId(null)}
               >
-                <div 
+                <div
                   style={{
                     ...styles.categoryIcon,
                     transform: isHovered && !isMobile ? 'scale(1.15)' : 'scale(1)',
@@ -177,48 +167,27 @@ const CategoryNav = () => {
                     style={styles.categoryIconImg}
                     onError={(e) => {
                       e.target.style.display = 'none';
-                      const defaultIconDiv = e.target.nextSibling;
-                      if (defaultIconDiv) {
-                        defaultIconDiv.style.display = 'flex';
-                      }
+                      const fallback = e.target.nextSibling;
+                      if (fallback) fallback.style.display = 'flex';
                     }}
                   />
                   <div style={styles.defaultIconWrapper}>
                     <DefaultIcon />
                   </div>
                 </div>
-                <span style={styles.categoryName}>
-                  {category.name}
-                </span>
+                <span style={styles.categoryName}>{category.name}</span>
               </div>
             );
           })}
         </div>
       </div>
-      
-      {/* Enhanced keyframes animations */}
+
       <style>{`
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        div[style*="overflowX"]::-webkit-scrollbar {
-          display: none;
-        }
-
-        /* Hide scrollbar for IE, Edge and Firefox */
-        div[style*="overflowX"] {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+        div::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );

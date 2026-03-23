@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 
 /**
  * Custom hook for search functionality
- * Handles search queries, filtering, and navigation
+ * Accepts either:
+ *   - A flat array of services (from API)
+ *   - An object with a .services array (legacy JSON format)
  */
 export const useSearch = (servicesData) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -11,22 +13,29 @@ export const useSearch = (servicesData) => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const navigate = useNavigate();
 
+  // Normalize: accept flat array OR { services: [...] }
+  const servicesList = useMemo(() => {
+    if (!servicesData) return [];
+    if (Array.isArray(servicesData)) return servicesData;
+    if (Array.isArray(servicesData.services)) return servicesData.services;
+    return [];
+  }, [servicesData]);
+
   // Extract unique categories from services
   const categories = useMemo(() => {
-    if (!servicesData?.services) return [];
-    return [...new Set(servicesData.services.map(s => s.category))];
-  }, [servicesData]);
+    return [...new Set(servicesList.map(s => s.category).filter(Boolean))];
+  }, [servicesList]);
 
   // Filter and get search results
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim() || !servicesData?.services) {
+    if (!searchQuery.trim() || servicesList.length === 0) {
       return { services: [], categories: [], total: 0 };
     }
 
     const query = searchQuery.toLowerCase().trim();
-    
+
     // Filter services
-    const matchedServices = servicesData.services.filter(service => {
+    const matchedServices = servicesList.filter(service => {
       const titleMatch = service.title?.toLowerCase().includes(query);
       const descMatch = service.description?.toLowerCase().includes(query);
       const categoryMatch = service.category?.toLowerCase().includes(query);
@@ -34,7 +43,7 @@ export const useSearch = (servicesData) => {
     });
 
     // Filter categories
-    const matchedCategories = categories.filter(cat => 
+    const matchedCategories = categories.filter(cat =>
       cat.toLowerCase().includes(query)
     );
 
@@ -49,7 +58,7 @@ export const useSearch = (servicesData) => {
       allServicesCount: matchedServices.length,
       allCategoriesCount: matchedCategories.length
     };
-  }, [searchQuery, servicesData, categories]);
+  }, [searchQuery, servicesList, categories]);
 
   // Handle search input change
   const handleSearchChange = (e) => {
@@ -68,15 +77,11 @@ export const useSearch = (servicesData) => {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => 
-          prev < totalItems - 1 ? prev + 1 : 0
-        );
+        setSelectedIndex(prev => (prev < totalItems - 1 ? prev + 1 : 0));
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setSelectedIndex(prev => 
-          prev > 0 ? prev - 1 : totalItems - 1
-        );
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : totalItems - 1));
         break;
       case 'Enter':
         e.preventDefault();
@@ -98,13 +103,11 @@ export const useSearch = (servicesData) => {
   // Handle item selection
   const handleItemSelect = (index) => {
     const totalCategories = searchResults.categories.length;
-    
+
     if (index < totalCategories) {
-      // Category selected
       const category = searchResults.categories[index];
       navigateToCategory(category);
     } else {
-      // Service selected
       const service = searchResults.services[index - totalCategories];
       navigateToService(service);
     }
@@ -116,20 +119,14 @@ export const useSearch = (servicesData) => {
     closeSearch();
   };
 
-  // Navigate to service detail (you may need to adjust this based on your routing)
+  // Navigate to service detail
   const navigateToService = (service) => {
-    // Option 1: Navigate to services page with the service highlighted
     navigate('/services', { state: { highlightServiceId: service.id } });
-    
-    // Option 2: If you have a service detail page
-    // navigate(`/services/${service.id}`);
-    
     closeSearch();
   };
 
   // Handle "View All Results" click
   const handleViewAllResults = () => {
-    // Navigate to services page with search query
     navigate('/services', { state: { searchQuery: searchQuery } });
     closeSearch();
   };

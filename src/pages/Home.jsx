@@ -1,5 +1,6 @@
 import HeroSlider from '../components/home/Heroslider';
 import CategoryNav from '../components/common/Categorynav';
+import LiveServices from './Admin/LiveServices';
 import TopDeals from '../components/home/TopDeals';
 import BestDealOfDay from '../components/common/BestDealofday';
 import CostEstimator from '../components/home/Costestimator';
@@ -11,21 +12,22 @@ import BlogSection from '../components/home/Blogsection';
 export default function Home() {
   return (
     <div>
+      {/* Category icon bar */}
       <CategoryNav />
-      
+
+      {/* Live Services strip — only renders if admin has added services */}
+      <LiveServices />
+
       {/* Hero Slider */}
       <HeroSlider />
-      
-      {/* Main Content Area - Matching HeroSlider padding */}
+
+      {/* Main Content Area */}
       <div className="home-wrapper">
         <div className="home-container">
           <div className="home-layout">
-            {/* Main Content Column */}
             <div className="main-content">
               <TopDeals />
             </div>
-
-            {/* Sidebar Column */}
             <aside className="sidebar">
               <BestDealOfDay />
             </aside>
@@ -33,22 +35,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Cost Calculator/Estimator Widget */}
       <CostEstimator />
-
-      {/* Customer Testimonials Video Slider */}
       <TestimonialSlider />
-
-      {/* Partner Brands Carousel */}
       <PartnerBrands />
-
-      {/* FAQ Section */}
       <FAQSection />
-
-      {/* Blog/Tips Section */}
       <BlogSection />
 
-      {/* Inline styles matching HeroSlider dimensions */}
       <style jsx>{`
         .home-wrapper {
           width: 100%;
@@ -76,7 +68,6 @@ export default function Home() {
           width: 100%;
         }
 
-        /* Mobile - Match HeroSlider mobile padding */
         @media (max-width: 768px) {
           .home-wrapper {
             padding: 0 8px;
