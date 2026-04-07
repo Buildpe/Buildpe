@@ -1,30 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   X, Star, Zap, Send, LogIn,
   CheckCircle, Phone, Mail, User, ImageIcon,
   ArrowRight, Tag, Shield, Clock, Award,
-  ThumbsUp, MapPin
+  ThumbsUp, MapPin, SlidersHorizontal,
 } from 'lucide-react';
 import { tokenStorage } from '../../Services/Authapi';
 
 const GOOGLE_FORM_CONFIG = {
   formId: '1FAIpQLSf-z5xESgi94JF64E1KQ7vFIuqoOtbQQYKSij4CFwAI-KY0Aw',
   entries: {
-    serviceName: 'entry.77093322',
-    name:        'entry.1392727185',
-    phone:       'entry.1491459465',
-    email:       'entry.903938955',
+    serviceName:    'entry.77093322',
+    name:           'entry.1392727185',
+    phone:          'entry.1491459465',
+    email:          'entry.903938955',
+    specifications: 'entry.2056365356', 
   }
 };
 
+const BASE_URL = 'https://buildpe-platform.onrender.com';
+
 const ProductDescription = ({ product, isOpen, onClose }) => {
   const navigate = useNavigate();
-  const [showQuote,  setShowQuote]  = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted,  setSubmitted]  = useState(false);
-  const [phoneInput, setPhoneInput] = useState('');
-  const [phoneError, setPhoneError] = useState('');
+  const [showQuote,   setShowQuote]  = useState(false);
+  const [submitting,  setSubmitting] = useState(false);
+  const [submitted,   setSubmitted]  = useState(false);
+  const [phoneInput,  setPhoneInput] = useState('');
+  const [phoneError,  setPhoneError] = useState('');
+
+  // ── Specs state ────────────────────────────────────────────
+  const [specs,      setSpecs]      = useState([]);
+  const [selections, setSelections] = useState({}); // { [specId]: Set<label> }
+
+  // ── Fetch specs when product changes ──────────────────────
+  useEffect(() => {
+    if (!isOpen || !product?.id) {
+      setSpecs([]);
+      setSelections({});
+      return;
+    }
+    fetch(`${BASE_URL}/api/public/services/${product.id}/specifications`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        setSpecs(Array.isArray(data) ? data : []);
+        setSelections({});
+      })
+      .catch(() => setSpecs([]));
+  }, [product?.id, isOpen]);
 
   if (!isOpen || !product) return null;
 
@@ -32,7 +55,7 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
   const userInfo   = tokenStorage.getUserInfo();
   const fullName   = `${userInfo?.firstName || ''} ${userInfo?.lastName || ''}`.trim();
 
-  // ── Price — always calculate from raw numbers ──────────────
+  // ── Price ──────────────────────────────────────────────────
   const rawOriginal = product.originalPrice ? Number(product.originalPrice) : null;
   const rawDiscount = product.discount       ? Number(product.discount)       : 0;
   const hasPrice    = rawOriginal && rawOriginal > 0;
@@ -48,9 +71,34 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
   const displayPrice = discountedPrice
     ? `₹${discountedPrice.toLocaleString('en-IN')}`
     : hasPrice ? `₹${rawOriginal.toLocaleString('en-IN')}` : 'Get Quote!';
-
   const strikePrice = (hasPrice && hasDiscount)
     ? `₹${rawOriginal.toLocaleString('en-IN')}` : null;
+
+  // ── Spec selection handler ─────────────────────────────────
+  const handleOptionClick = (spec, label) => {
+    setSelections(prev => {
+      const current = prev[spec.id] ? new Set(prev[spec.id]) : new Set();
+      if (spec.allowMultiple) {
+        // toggle
+        if (current.has(label)) current.delete(label);
+        else current.add(label);
+      } else {
+        // single select — replace
+        current.clear();
+        current.add(label);
+      }
+      return { ...prev, [spec.id]: current };
+    });
+  };
+
+  // ── Build specs string for Google Form ────────────────────
+  const buildSpecsString = () => {
+    return specs
+      .filter(spec => selections[spec.id]?.size > 0)
+      .map(spec => `${spec.name}: ${[...selections[spec.id]].join(', ')}`)
+      .join(' | ');
+    // e.g. "Material: Wood | Quality: Premium | Finish: Matte"
+  };
 
   // ── Submit ─────────────────────────────────────────────────
   const handleSubmit = async () => {
@@ -67,8 +115,17 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
       fd.append(GOOGLE_FORM_CONFIG.entries.name,  fullName);
       fd.append(GOOGLE_FORM_CONFIG.entries.phone, phone);
       fd.append(GOOGLE_FORM_CONFIG.entries.email, userInfo.email || '');
-      await fetch(`https://docs.google.com/forms/d/e/${GOOGLE_FORM_CONFIG.formId}/formResponse`,
-        { method: 'POST', body: fd, mode: 'no-cors' });
+
+      // ✅ append spec selections as combined string
+      const specsString = buildSpecsString();
+      if (specsString) {
+        fd.append(GOOGLE_FORM_CONFIG.entries.specifications, specsString);
+      }
+
+      await fetch(
+        `https://docs.google.com/forms/d/e/${GOOGLE_FORM_CONFIG.formId}/formResponse`,
+        { method: 'POST', body: fd, mode: 'no-cors' }
+      );
       setSubmitted(true);
       setTimeout(() => { setSubmitted(false); setShowQuote(false); onClose(); }, 3500);
     } catch { }
@@ -87,20 +144,21 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
 
           {/* ══ LEFT ══ */}
           <div className="pd-left">
-
-            {/* Image */}
             <div className="pd-img-box">
               {hasDiscount && (
-                <div className="pd-badge"><Zap size={11} fill="white" strokeWidth={0} />{rawDiscount}% OFF</div>
+                <div className="pd-badge">
+                  <Zap size={11} fill="white" strokeWidth={0} />{rawDiscount}% OFF
+                </div>
               )}
               {product.image ? (
                 <img src={product.image} alt={product.title} className="pd-img" />
               ) : (
-                <div className="pd-img-empty"><ImageIcon size={52} strokeWidth={1} /><span>No Image</span></div>
+                <div className="pd-img-empty">
+                  <ImageIcon size={52} strokeWidth={1} /><span>No Image</span>
+                </div>
               )}
             </div>
 
-            {/* Price */}
             <div className="pd-price-block">
               <div className="pd-price-row">
                 <span className="pd-price">{displayPrice}</span>
@@ -114,14 +172,12 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
               )}
             </div>
 
-            {/* Rating */}
             <div className="pd-rating">
               {[1,2,3,4,5].map(s => <Star key={s} size={14} fill="#F59E0B" color="#F59E0B" />)}
               <span className="pd-rating-n">4.8</span>
               <span className="pd-rating-c">· 2,345 reviews</span>
             </div>
 
-            {/* Highlights */}
             <div className="pd-highlights">
               <div className="pd-hl"><Shield  size={15} /><div><strong>Secure Payment</strong><span>100% safe & encrypted</span></div></div>
               <div className="pd-hl"><Award   size={15} /><div><strong>1 Year Warranty</strong><span>Official guarantee</span></div></div>
@@ -129,17 +185,14 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
               <div className="pd-hl"><ThumbsUp size={15} /><div><strong>Verified Service</strong><span>Quality assured</span></div></div>
               <div className="pd-hl"><MapPin  size={15} /><div><strong>Pan India</strong><span>Available everywhere</span></div></div>
             </div>
-
           </div>
 
           {/* ══ RIGHT ══ */}
           <div className="pd-right">
 
             {product.category && <span className="pd-cat">{product.category}</span>}
-
             <h1 className="pd-title">{product.title}</h1>
 
-            {/* Price — mobile only */}
             <div className="pd-price-mobile">
               <span className="pd-price">{displayPrice}</span>
               {strikePrice && <span className="pd-strike">{strikePrice}</span>}
@@ -162,6 +215,43 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
               <div className="pd-perk"><CheckCircle size={14} /><span>Timely delivery guaranteed</span></div>
               <div className="pd-perk"><CheckCircle size={14} /><span>Post-service support</span></div>
             </div>
+
+            {/* ══ SPECIFICATIONS ══ — between perks and Get Quote */}
+            {specs.length > 0 && (
+              <>
+                <div className="pd-sep" />
+                <div className="pd-specs">
+                  <p className="pd-section-lbl" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <SlidersHorizontal size={11} /> Customise Your Service
+                  </p>
+                  {specs.map(spec => (
+                    <div key={spec.id} className="pd-spec-row">
+                      <div className="pd-spec-name">
+                        {spec.name}
+                        {spec.allowMultiple && (
+                          <span className="pd-spec-multi">multiple</span>
+                        )}
+                      </div>
+                      <div className="pd-spec-options">
+                        {spec.options?.map(opt => {
+                          const selected = selections[spec.id]?.has(opt.label);
+                          return (
+                            <button
+                              key={opt.id}
+                              className={`pd-chip${selected ? ' pd-chip--selected' : ''}`}
+                              onClick={() => handleOptionClick(spec, opt.label)}
+                            >
+                              {selected && <CheckCircle size={11} />}
+                              {opt.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
             <div className="pd-sep" />
 
@@ -202,6 +292,18 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
                     <p>For: <strong>{product.title}</strong></p>
                   </div>
                 </div>
+
+                {/* Show selected specs summary */}
+                {buildSpecsString() && (
+                  <div style={{
+                    background: '#f8fafc', border: '1px solid #e2e8f0',
+                    borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#475569',
+                  }}>
+                    <strong style={{ color: '#374151' }}>Your selections: </strong>
+                    {buildSpecsString()}
+                  </div>
+                )}
+
                 <div className="pd-info-list">
                   <div className="pd-info-row">
                     <span className="pd-info-ico"><User size={12} /></span>
@@ -253,7 +355,6 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
       </div>
 
       <style jsx>{`
-        /* Overlay — above everything */
         .pd-overlay {
           position: fixed; inset: 0; z-index: 99999;
           display: flex; align-items: center; justify-content: center;
@@ -264,7 +365,6 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
         @keyframes pdFade { from{opacity:0} to{opacity:1} }
         .pd-backdrop-click { position:absolute; inset:0; z-index:0; }
 
-        /* Card — 80% of screen */
         .pd-card {
           position: relative; z-index: 1;
           width: 80vw; max-width: 1100px;
@@ -276,10 +376,9 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
         }
         @keyframes pdUp {
           from{opacity:0;transform:translateY(18px) scale(.97)}
-          to  {opacity:1;transform:translateY(0)    scale(1)}
+          to  {opacity:1;transform:translateY(0) scale(1)}
         }
 
-        /* Close */
         .pd-x {
           position:absolute; top:14px; right:14px; z-index:20;
           width:34px; height:34px; border-radius:50%;
@@ -290,7 +389,6 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
         }
         .pd-x:hover { background:#fee2e2; color:#dc2626; transform:rotate(90deg); border-color:#fca5a5; }
 
-        /* ══ LEFT ══ */
         .pd-left {
           background: #f8fafc;
           border-right: 1px solid #e9ecef;
@@ -339,21 +437,17 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
         .pd-rating-n { font-size:13px; font-weight:700; color:#1f2937; }
         .pd-rating-c { font-size:11.5px; color:#9ca3af; }
 
-        /* Highlights — replaces separate trust + stats */
         .pd-highlights {
           background:white; border-radius:12px;
           border:1px solid #e9ecef; padding:12px 14px;
           display:flex; flex-direction:column; gap:10px;
         }
-        .pd-hl {
-          display:flex; align-items:flex-start; gap:10px;
-        }
+        .pd-hl { display:flex; align-items:flex-start; gap:10px; }
         .pd-hl svg { color:#EC1940; flex-shrink:0; margin-top:1px; }
         .pd-hl div { display:flex; flex-direction:column; gap:1px; }
         .pd-hl strong { font-size:12px; font-weight:700; color:#1f2937; }
         .pd-hl span   { font-size:11px; color:#9ca3af; }
 
-        /* ══ RIGHT ══ */
         .pd-right {
           padding:32px 36px 28px;
           overflow-y:auto; display:flex; flex-direction:column;
@@ -373,9 +467,7 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
           line-height:1.2; letter-spacing:-.5px; margin:0 0 14px;
         }
 
-        /* Mobile price — hidden on desktop */
         .pd-price-mobile { display:none; }
-
         .pd-sep { height:1px; background:#f1f5f9; margin-bottom:16px; }
 
         .pd-section-lbl {
@@ -387,7 +479,6 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
           margin:0 0 14px; white-space:pre-line;
         }
 
-        /* Perks */
         .pd-perks {
           display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;
         }
@@ -399,7 +490,31 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
         }
         .pd-perk svg { color:#059669; flex-shrink:0; }
 
-        /* CTA */
+        /* ── SPECS ── */
+        .pd-specs { margin-bottom: 16px; }
+        .pd-spec-row { margin-bottom: 14px; }
+        .pd-spec-name {
+          font-size: 12px; font-weight: 700; color: #374151;
+          margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+        }
+        .pd-spec-multi {
+          font-size: 10px; font-weight: 600; color: #7c3aed;
+          background: #f5f3ff; border: 1px solid #ddd6fe;
+          padding: 1px 6px; border-radius: 10px;
+        }
+        .pd-spec-options { display: flex; flex-wrap: wrap; gap: 7px; }
+        .pd-chip {
+          display: inline-flex; align-items: center; gap: 5px;
+          padding: 6px 13px; border-radius: 20px;
+          border: 1.5px solid #e2e8f0; background: #f8fafc;
+          font-size: 12.5px; font-weight: 500; color: #374151;
+          cursor: pointer; transition: all .15s; font-family: inherit;
+        }
+        .pd-chip:hover { border-color: #EC1940; color: #EC1940; background: #fff1f2; }
+        .pd-chip--selected {
+          border-color: #EC1940; background: #fff1f2; color: #EC1940; font-weight: 700;
+        }
+
         .pd-cta { margin-top:auto; }
         .pd-btn-cta {
           width:100%; padding:16px 24px;
@@ -413,7 +528,6 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
         .pd-btn-cta:hover { transform:translateY(-2px); box-shadow:0 14px 32px rgba(236,25,64,.4); }
         .pd-cta-note { text-align:center; font-size:11.5px; color:#94a3b8; margin:8px 0 0; }
 
-        /* Box */
         .pd-box {
           margin-top:auto; border-radius:16px; padding:18px;
           display:flex; flex-direction:column; gap:12px;
@@ -503,19 +617,13 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
         .pd-success h4 { font-size:17px; font-weight:800; color:#0d1117; margin:0; }
         .pd-success p  { font-size:13px; color:#64748b; margin:0; }
 
-        /* ══ RESPONSIVE ══ */
         @media (max-width: 900px) {
-          .pd-card {
-            width: 94vw;
-            grid-template-columns: 260px 1fr;
-          }
+          .pd-card { width: 94vw; grid-template-columns: 260px 1fr; }
         }
-
         @media (max-width: 700px) {
           .pd-card {
-            grid-template-columns: 1fr;
-            width: 96vw; height: 92vh; max-height: 100%;
-            border-radius: 20px; overflow-y: auto;
+            grid-template-columns: 1fr; width: 96vw; height: 92vh;
+            max-height: 100%; border-radius: 20px; overflow-y: auto;
           }
           .pd-left {
             flex-direction: row; flex-wrap: wrap; gap: 10px;
@@ -528,13 +636,9 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
           .pd-title { font-size:20px; }
           .pd-perks { grid-template-columns: 1fr; }
         }
-
         @media (max-width: 540px) {
           .pd-overlay { padding:0; align-items:flex-end; }
-          .pd-card {
-            width:100%; border-radius:22px 22px 0 0;
-            height:94vh; max-height:100%;
-          }
+          .pd-card { width:100%; border-radius:22px 22px 0 0; height:94vh; max-height:100%; }
           .pd-left { flex-direction:column; padding:0; gap:0; }
           .pd-img-box { width:100%; aspect-ratio:16/7; height:auto; border-radius:0; }
           .pd-price-block, .pd-rating, .pd-highlights { margin:0 14px; }
@@ -542,8 +646,7 @@ const ProductDescription = ({ product, isOpen, onClose }) => {
           .pd-right { padding:14px 16px 24px; }
           .pd-title { font-size:19px; }
           .pd-price-mobile {
-            display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
-            margin-bottom:10px;
+            display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin-bottom:10px;
           }
           .pd-price-block { display:none; }
           .pd-highlights { display:none; }

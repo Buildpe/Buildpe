@@ -1,16 +1,20 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Wrench, Tag, LogOut, ArrowLeft, ChevronRight, Zap } from 'lucide-react';
+import {
+  LayoutDashboard, Users, Wrench, Tag, LogOut,
+  ArrowLeft, ChevronRight, Zap, SlidersHorizontal,
+} from 'lucide-react';
 import { tokenStorage, logoutUser } from '../../Services/Authapi';
 import { getAdminRole } from './adminAuth';
 import './admin.css';
 
 const NAV = [
-  { key: 'dashboard',  label: 'Dashboard',  icon: LayoutDashboard, path: '/admin' },
-  { key: 'users',      label: 'Users',       icon: Users,           path: '/admin/users' },
-  { key: 'services',   label: 'Services',    icon: Wrench,          path: '/admin/services' },
-  { key: 'categories', label: 'Categories',  icon: Tag,             path: '/admin/categories' },
-  { key: 'deals',      label: 'Deals',       icon: Zap,             path: '/admin/deals' },
+  { key: 'dashboard',      label: 'Dashboard',      icon: LayoutDashboard, path: '/admin' },
+  { key: 'users',          label: 'Users',           icon: Users,           path: '/admin/users' },
+  { key: 'services',       label: 'Services',        icon: Wrench,          path: '/admin/services' },
+  { key: 'categories',     label: 'Categories',      icon: Tag,             path: '/admin/categories' },
+  { key: 'deals',          label: 'Deals',           icon: Zap,             path: '/admin/deals' },
+  { key: 'specifications', label: 'Specifications',  icon: SlidersHorizontal, path: '/admin/specifications' }, // ✅ NEW
 ];
 
 export default function AdminLayout({ children, activeKey }) {
