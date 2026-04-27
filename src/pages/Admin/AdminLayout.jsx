@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Wrench, Tag, LogOut,
-  ArrowLeft, ChevronRight, Zap, SlidersHorizontal,
+  ArrowLeft, ChevronRight, Zap, SlidersHorizontal, Home,
 } from 'lucide-react';
 import { tokenStorage, logoutUser } from '../../Services/Authapi';
 import { getAdminRole } from './adminAuth';
@@ -14,7 +14,8 @@ const NAV = [
   { key: 'services',       label: 'Services',        icon: Wrench,          path: '/admin/services' },
   { key: 'categories',     label: 'Categories',      icon: Tag,             path: '/admin/categories' },
   { key: 'deals',          label: 'Deals',           icon: Zap,             path: '/admin/deals' },
-  { key: 'specifications', label: 'Specifications',  icon: SlidersHorizontal, path: '/admin/specifications' }, // ✅ NEW
+  { key: 'specifications', label: 'Specifications',  icon: SlidersHorizontal, path: '/admin/specifications' },
+  { key: 'listings',       label: 'Buy & Sell Listings', icon: Home,           path: '/admin/listings' },
 ];
 
 export default function AdminLayout({ children, activeKey }) {

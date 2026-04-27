@@ -8,14 +8,18 @@ import TestimonialSlider from '../components/home/TestimonialSlider';
 import FAQSection from '../components/home/Faqsection';
 import PartnerBrands from '../components/home/Partnerbrands';
 import BlogSection from '../components/home/Blogsection';
+import PlatformToggle from '../components/common/PlatformToggle'; // ✅ NEW
 
 export default function Home() {
   return (
     <div>
+      {/* ✅ NEW — Platform toggle (BuildPE ↔ Buy & Sell) */}
+      <PlatformToggle active="buildpe" />
+
       {/* Category icon bar */}
       <CategoryNav />
 
-      {/* Live Services strip — only renders if admin has added services */}
+      {/* Live Services strip */}
       <LiveServices />
 
       {/* Hero Slider */}
@@ -47,40 +51,20 @@ export default function Home() {
           padding: 0 16px;
           margin-bottom: 12px;
         }
-
-        .home-container {
-          width: 100%;
-        }
-
+        .home-container { width: 100%; }
         .home-layout {
           display: grid;
           grid-template-columns: 1fr 340px;
           gap: 16px;
           align-items: start;
         }
-
-        .main-content {
-          min-width: 0;
-          width: 100%;
-        }
-
-        .sidebar {
-          width: 100%;
-        }
+        .main-content { min-width: 0; width: 100%; }
+        .sidebar { width: 100%; }
 
         @media (max-width: 768px) {
-          .home-wrapper {
-            padding: 0 8px;
-          }
-
-          .home-layout {
-            grid-template-columns: 1fr;
-            gap: 12px;
-          }
-
-          .sidebar {
-            max-width: 100%;
-          }
+          .home-wrapper { padding: 0 8px; }
+          .home-layout { grid-template-columns: 1fr; gap: 12px; }
+          .sidebar { max-width: 100%; }
         }
       `}</style>
     </div>
