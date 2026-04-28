@@ -24,10 +24,6 @@ const FAQS = [
     a: 'Yes, listing your property on BuildPE Buy & Sell is completely free. There are no hidden charges for posting a listing.',
   },
   {
-    q: 'Do I need to pay anything if my property gets sold?',
-    a: 'No. BuildPE does not charge any commission or brokerage when your property is sold through our platform.',
-  },
-  {
     q: 'What types of properties can I list?',
     a: 'You can list Lands & Plots, Commercial Properties, Apartments & Houses, and any other construction-related properties.',
   },

@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PlatformToggle from '../components/common/PlatformToggle';
 import BuySellNav from '../components/common/BuySellNav';
+import apiClient from '../Services/Api';
 
 // ── Fix Vite marker icon bug ───────────────────────────────────────────
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -95,10 +96,10 @@ export default function BuySellMap() {
   const fetchListings = useCallback(async (bounds = HYD) => {
     setLoading(true);
     try {
-      const res  = await fetch(
+      const res  = await apiClient.get(
         `/api/public/listings/map?minLat=${bounds.minLat}&maxLat=${bounds.maxLat}&minLng=${bounds.minLng}&maxLng=${bounds.maxLng}`
       );
-      const data = await res.json();
+      const data = res.data;
       setListings(Array.isArray(data) ? data : []);
     } catch {
       setListings([]);
@@ -224,7 +225,7 @@ export default function BuySellMap() {
                   <div style={{ fontSize: '14px', fontWeight: '800', marginBottom: '4px', background: 'linear-gradient(135deg,#EC1940,#F89C1C)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{fmt(l.price)}</div>
                   <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '10px' }}>📍 {l.locality || l.city}{l.areaSqft && ` · ${l.areaSqft} sqft`}</div>
                   <button
-                    onClick={() => navigate(`/buy-sell/buy/${l.id}`)}
+                    onClick={() => navigate(`/buy-sell/property/${l.id}`)}
                     style={{ width: '100%', padding: '8px', background: 'linear-gradient(135deg,#EC1940,#F89C1C)', color: '#fff', border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit' }}
                   >
                     View Details →
@@ -383,7 +384,7 @@ export default function BuySellMap() {
               listings.map(l => (
                 <div
                   key={l.id}
-                  onClick={() => navigate(`/buy-sell/buy/${l.id}`)}
+                  onClick={() => navigate(`/buy-sell/property/${l.id}`)}
                   style={{ display: 'flex', gap: '12px', padding: '12px 16px', borderBottom: '1px solid #f9fafb', cursor: 'pointer', background: selectedId === l.id ? '#fff8f5' : '#fff' }}
                   onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
                   onMouseLeave={e => e.currentTarget.style.background = selectedId === l.id ? '#fff8f5' : '#fff'}

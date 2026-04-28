@@ -143,6 +143,7 @@ export default function BuySellPostListing() {
     latitude:         '',
     longitude:        '',
     hideExactAddress: true,
+    roiPercent:       '',
   });
 
   const set = (k, v) => {
@@ -239,6 +240,7 @@ export default function BuySellPostListing() {
         latitude:         form.latitude  ? Number(form.latitude)  : null,
         longitude:        form.longitude ? Number(form.longitude) : null,
         hideExactAddress: form.hideExactAddress,
+        roiPercent:       form.roiPercent ? Number(form.roiPercent) : null,
         imgUrls:          images.filter(i => i.url && !i.error).map(i => i.url),
       };
       await apiClient.post('/api/user/listings', payload);
@@ -330,6 +332,10 @@ export default function BuySellPostListing() {
 
               <Field label="Approval Type">
                 <input style={inp} placeholder="e.g. HMDA, RERA, DTCP, Panchayat" value={form.approvalType} onChange={e => set('approvalType', e.target.value)} />
+              </Field>
+
+              <Field label="Expected ROI (% per year)" half>
+                <input style={inp} type="number" min="0" max="100" step="0.1" placeholder="e.g. 12" value={form.roiPercent} onChange={e => set('roiPercent', e.target.value)} />
               </Field>
 
               <Field label="Seller Type">
