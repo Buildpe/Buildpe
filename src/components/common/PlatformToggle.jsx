@@ -189,7 +189,7 @@ const PlatformToggle = ({ active = 'buildpe' }) => {
           </svg>
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0 }}>
-            <span style={labelMain('buildpe')}>Buildpe</span>
+            <span style={labelMain('buildpe')}>BuildPe</span>
             <span style={labelSub('buildpe')}>Services &amp; Solutions</span>
           </div>
 
