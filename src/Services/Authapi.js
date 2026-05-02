@@ -89,7 +89,7 @@ export async function logoutUser() {
 }
 
 export function initiateGoogleLogin() {
-  const BASE_URL = 'https://buildpe-platform.onrender.com';
+  const BASE_URL = 'https://buildpe-platform-3oei.onrender.com';
   window.location.href = `${BASE_URL}/oauth2/authorization/google`;
 }
 

@@ -28,7 +28,7 @@ export default function OAuthCallback() {
       // 2. Call refresh-token endpoint — it returns full UserInfo
       //    (firstName, lastName, email, phoneNumber, role, id)
       //    No backend changes needed — endpoint already exists!
-      fetch('https://buildpe-platform.onrender.com/api/auth/refresh-token', {
+      fetch('https://buildpe-platform-3oei.onrender.com/api/auth/refresh-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),

@@ -19,7 +19,7 @@ const GOOGLE_FORM_CONFIG = {
   }
 };
 
-const BASE_URL = 'https://buildpe-platform.onrender.com';
+const BASE_URL = 'https://buildpe-platform-3oei.onrender.com';
 
 const ProductDescription = ({ product, isOpen, onClose }) => {
   const navigate = useNavigate();
