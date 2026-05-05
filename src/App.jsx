@@ -28,6 +28,10 @@ import AdminServices  from './pages/Admin/Services';
 import Categories     from './pages/Admin/Categories';
 import Deals          from './pages/Admin/Deals';
 import Specifications from './pages/Admin/Specifications';
+
+// Blog
+import AllBlogs  from './pages/AllBlogs';
+import BlogPost  from './pages/BlogPost';
 import AdminListings  from './pages/Admin/AdminListings';
 
 function Layout() {
@@ -64,6 +68,8 @@ function Layout() {
           <Route path="/admin/deals"          element={<Deals />} />
           <Route path="/admin/specifications" element={<Specifications />} />
           <Route path="/admin/listings"       element={<AdminListings />} />
+          <Route path="/blogs"               element={<AllBlogs />} />
+          <Route path="/blogs/:slug"         element={<BlogPost />} />
         </Routes>
       </main>
       {!hideChrome && <Footer />}
@@ -79,4 +85,4 @@ export default function App() {
       </ProductModalProvider>
     </BrowserRouter>
   );
-} 
+}

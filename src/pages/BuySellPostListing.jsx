@@ -26,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 import PlatformToggle from '../components/common/PlatformToggle';
 import BuySellNav from '../components/common/BuySellNav';
 import apiClient from '../Services/Api';
+import FullscreenMapPicker from '../components/common/FullscreenMapPicker';
 
 // ── Cloudinary config (same as existing ImageUpload component) ──
 const CLOUD_NAME    = 'dbjwnych0';
@@ -118,6 +119,7 @@ export default function BuySellPostListing() {
   const [saving,  setSaving]  = useState(false);
   const [errors,  setErrors]  = useState({});
   const [success, setSuccess] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
 
   // Images
   const [images,    setImages]    = useState([]);   // [{ url, uploading, error }]
@@ -377,93 +379,83 @@ export default function BuySellPostListing() {
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>
                   Pin Location on Map
                   <span style={{ fontSize: 12, fontWeight: 400, color: '#9ca3af', marginLeft: 6 }}>
-                    — click anywhere on the map to drop a pin
+                    — click the map to open full screen picker
                   </span>
                 </div>
 
-                {/* Use My Location button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!navigator.geolocation) { alert('Geolocation not supported by your browser.'); return; }
-                    navigator.geolocation.getCurrentPosition(
-                      async (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lng = pos.coords.longitude;
-                        set('latitude',  lat);
-                        set('longitude', lng);
-                        // Reverse geocode to fill city/locality automatically
-                        try {
-                          const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, { headers: { 'Accept-Language': 'en' } });
-                          const data = await res.json();
-                          const addr = data.address || {};
-                          if (!form.city)     set('city',     addr.city || addr.town || addr.county || '');
-                          if (!form.locality) set('locality', addr.suburb || addr.neighbourhood || addr.village || '');
-                          if (!form.state)    set('state',    addr.state || '');
-                          if (!form.address)  set('address',  data.display_name?.split(',').slice(0, 3).join(', ') || '');
-                        } catch (_e) { /* reverse geocode is non-critical */ }
-                      },
-                      () => alert('Could not get your location. Please allow location access in your browser.')
-                    );
+                {/* Map preview card — click to open fullscreen */}
+                <div
+                  onClick={() => setMapOpen(true)}
+                  style={{
+                    position: 'relative', height: 180, borderRadius: 12,
+                    overflow: 'hidden', cursor: 'pointer',
+                    border: form.latitude && form.longitude ? '2px solid #EC1940' : '2px dashed #e5e7eb',
+                    background: '#f0f4f8',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'border-color 0.2s, box-shadow 0.2s',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                   }}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: 'linear-gradient(135deg,#EC1940,#F89C1C)', color: '#fff', border: 'none', borderRadius: 25, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 12, boxShadow: '0 2px 8px rgba(236,25,64,0.25)' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#EC1940'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(236,25,64,0.18)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = form.latitude && form.longitude ? '#EC1940' : '#e5e7eb'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; }}
                 >
-                  {/* GPS icon */}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="4" stroke="#fff" strokeWidth="2"/>
-                    <circle cx="12" cy="12" r="8" stroke="#fff" strokeWidth="1.5" strokeDasharray="2 2"/>
-                    <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  Use My Current Location
-                </button>
-
-                {/* Leaflet map */}
-                <div style={{ borderRadius: 12, overflow: 'hidden', border: form.latitude && form.longitude ? '2px solid #EC1940' : '1.5px solid #e5e7eb', height: 280, position: 'relative' }}>
-                  <MapContainer
-                    center={form.latitude && form.longitude ? [Number(form.latitude), Number(form.longitude)] : [17.385, 78.4867]}
-                    zoom={form.latitude && form.longitude ? 16 : 12}
-                    style={{ width: '100%', height: '100%' }}
-                    zoomControl={true}
-                  >
-                    <TileLayer
-                      url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                      attribution='&copy; OpenStreetMap &copy; CARTO'
-                      maxZoom={19}
+                  {/* Static map thumbnail if pinned */}
+                  {form.latitude && form.longitude ? (
+                    <img
+                      src={`https://staticmap.openstreetmap.de/staticmap.php?center=${form.latitude},${form.longitude}&zoom=15&size=600x300&markers=${form.latitude},${form.longitude},red`}
+                      alt="map"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={e => { e.target.style.display = 'none'; }}
                     />
-                    <MapClickHandler onPick={async (lat, lng) => {
-                      set('latitude',  lat);
-                      set('longitude', lng);
-                      // Auto-fill city/locality from reverse geocode
-                      try {
-                        const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, { headers: { 'Accept-Language': 'en' } });
-                        const data = await res.json();
-                        const addr = data.address || {};
-                        if (!form.city)     set('city',     addr.city || addr.town || addr.county || '');
-                        if (!form.locality) set('locality', addr.suburb || addr.neighbourhood || addr.village || '');
-                        if (!form.state)    set('state',    addr.state || '');
-                      } catch (_e) { /* reverse geocode is non-critical */ }
-                    }} />
-                    {form.latitude && form.longitude && (
+                  ) : (
+                    // Placeholder grid pattern
+                    <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, opacity: 0.08 }}>
+                      <defs>
+                        <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#374151" strokeWidth="1"/>
+                        </pattern>
+                      </defs>
+                      <rect width="100%" height="100%" fill="url(#grid)"/>
+                    </svg>
+                  )}
+
+                  {/* Overlay */}
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: form.latitude && form.longitude
+                      ? 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)'
+                      : 'rgba(248,249,250,0.0)',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: 8,
+                  }}>
+                    {!form.latitude && (
                       <>
-                        <FlyToCoords lat={Number(form.latitude)} lng={Number(form.longitude)} />
-                        <Marker position={[Number(form.latitude), Number(form.longitude)]} />
+                        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg,#EC1940,#F89C1C)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(236,25,64,0.3)' }}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="#fff"/>
+                          </svg>
+                        </div>
+                        <div style={{ fontSize: 13.5, fontWeight: 700, color: '#374151' }}>Click to Open Map</div>
+                        <div style={{ fontSize: 12, color: '#9ca3af' }}>Search & pin your property location</div>
                       </>
                     )}
-                  </MapContainer>
-                  {/* Hint overlay when no pin yet */}
-                  {!form.latitude && (
-                    <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.60)', color: '#fff', fontSize: 12, fontWeight: 500, padding: '6px 14px', borderRadius: 20, pointerEvents: 'none', zIndex: 500, whiteSpace: 'nowrap' }}>
-                      👆 Click on the map to pin your property
-                    </div>
-                  )}
+                    {form.latitude && form.longitude && (
+                      <div style={{ position: 'absolute', bottom: 10, left: 10, right: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ background: 'rgba(0,0,0,0.65)', borderRadius: 20, padding: '5px 12px', fontSize: 11.5, color: '#fff', fontWeight: 600 }}>
+                          📍 {Number(form.latitude).toFixed(4)}, {Number(form.longitude).toFixed(4)}
+                        </div>
+                        <div style={{ background: 'linear-gradient(135deg,#EC1940,#F89C1C)', borderRadius: 20, padding: '5px 12px', fontSize: 11.5, color: '#fff', fontWeight: 600 }}>
+                          Edit ✏️
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Coordinates readout */}
+                {/* Pinned confirmation */}
                 {form.latitude && form.longitude && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, padding: '8px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 12 }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     <span style={{ color: '#15803d', fontWeight: 600 }}>Location pinned</span>
-                    <span style={{ color: '#6b7280', marginLeft: 4 }}>{Number(form.latitude).toFixed(5)}, {Number(form.longitude).toFixed(5)}</span>
                     <button
                       type="button"
                       onClick={() => { set('latitude', ''); set('longitude', ''); }}
@@ -474,6 +466,24 @@ export default function BuySellPostListing() {
                   </div>
                 )}
               </div>
+
+              {/* Fullscreen map modal */}
+              {mapOpen && (
+                <FullscreenMapPicker
+                  initialLat={form.latitude ? Number(form.latitude) : null}
+                  initialLng={form.longitude ? Number(form.longitude) : null}
+                  onClose={() => setMapOpen(false)}
+                  onConfirm={({ lat, lng, city, locality, state, address }) => {
+                    set('latitude',  lat);
+                    set('longitude', lng);
+                    if (!form.city)     set('city',     city);
+                    if (!form.locality) set('locality', locality);
+                    if (!form.state)    set('state',    state);
+                    if (!form.address)  set('address',  address);
+                    setMapOpen(false);
+                  }}
+                />
+              )}
 
               {/* ── Privacy toggle ─────────────────────────────── */}
               <div style={{ flex: '1 1 100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: '#f9fafb', borderRadius: 10, border: '1.5px solid #e5e7eb' }}>
