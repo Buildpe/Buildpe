@@ -3,15 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { registerUser, initiateGoogleLogin } from '../Services/Authapi';
 import apiClient from '../Services/Api';
 
-const STEPS = ['Phone', 'Verify Phone', 'Details & Email', 'Verify Email'];
+const STEPS = ['Your Details', 'Verify Email'];
 
 export default function Register() {
   const navigate = useNavigate();
   const [step,        setStep]        = useState(1);
-  const [phone,       setPhone]       = useState('');
-  const [phoneOtp,    setPhoneOtp]    = useState('');
   const [emailOtp,    setEmailOtp]    = useState('');
-  const [form,        setForm]        = useState({ firstName: '', lastName: '', email: '', password: '' });
+  const [form,        setForm]        = useState({ firstName: '', lastName: '', email: '', password: '', phone: '' });
   const [loading,     setLoading]     = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [error,       setError]       = useState('');
@@ -24,24 +22,6 @@ export default function Register() {
     }, 1000);
   };
 
-  const handleSendPhoneOtp = async (e) => {
-    e.preventDefault(); setError('');
-    if (!/^\d{10}$/.test(phone.trim())) { setFieldErrors({ phone: 'Enter a valid 10-digit mobile number' }); return; }
-    setLoading(true);
-    try { await apiClient.post('/api/auth/otp/send-phone', { phone }); setStep(2); startResendTimer(); }
-    catch (err) { setError(err.response?.data?.error || 'Failed to send OTP. Try again.'); }
-    finally { setLoading(false); }
-  };
-
-  const handleVerifyPhoneOtp = async (e) => {
-    e.preventDefault(); setError('');
-    if (phoneOtp.length !== 6) { setFieldErrors({ phoneOtp: 'Enter the 6-digit OTP' }); return; }
-    setLoading(true);
-    try { await apiClient.post('/api/auth/otp/verify-phone', { phone, otp: phoneOtp }); setStep(3); }
-    catch (err) { setError(err.response?.data?.error || 'Invalid OTP. Try again.'); }
-    finally { setLoading(false); }
-  };
-
   const handleSendEmailOtp = async (e) => {
     e.preventDefault(); setError('');
     const errors = {};
@@ -49,9 +29,10 @@ export default function Register() {
     if (!form.lastName.trim())  errors.lastName  = 'Last name is required';
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.email = 'Enter a valid email address';
     if (!form.password || form.password.length < 6) errors.password = 'Password must be at least 6 characters';
+    if (form.phone && !/^\d{10}$/.test(form.phone.trim())) errors.phone = 'Enter a valid 10-digit number (or leave blank)';
     if (Object.keys(errors).length) { setFieldErrors(errors); return; }
     setLoading(true);
-    try { await apiClient.post('/api/auth/otp/send-email', { email: form.email }); setStep(4); startResendTimer(); }
+    try { await apiClient.post('/api/auth/otp/send-email', { email: form.email }); setStep(2); startResendTimer(); }
     catch (err) { setError(err.response?.data?.error || 'Failed to send email OTP.'); }
     finally { setLoading(false); }
   };
@@ -62,7 +43,7 @@ export default function Register() {
     setLoading(true);
     try {
       await apiClient.post('/api/auth/otp/verify-email', { email: form.email, otp: emailOtp });
-      await registerUser({ ...form, phoneNumber: phone });
+      await registerUser({ ...form, phoneNumber: form.phone });
       navigate('/login');
     } catch (err) { setError(err.response?.data?.error || err.message || 'Registration failed.'); }
     finally { setLoading(false); }
@@ -159,7 +140,7 @@ export default function Register() {
             <h1>Create Your BuildPe Account</h1>
             <p>Join thousands of homeowners and professionals on India's trusted construction platform.</p>
             <div className="auth-step-list">
-              {['Enter mobile number','Verify mobile OTP','Fill your details','Verify email OTP'].map((s,i)=>(
+              {['Fill your details','Verify email OTP'].map((s,i)=>(
                 <div key={i} className="auth-step-item">
                   <div className={`auth-step-dot ${step>i+1?'done':step===i+1?'active':''}`}>{step>i+1?'✓':i+1}</div>
                   <span style={{fontWeight:step===i+1?700:400}}>{s}</span>
@@ -168,52 +149,11 @@ export default function Register() {
             </div>
           </div>
           <div className="auth-right">
-            <form onSubmit={step===1?handleSendPhoneOtp:step===2?handleVerifyPhoneOtp:step===3?handleSendEmailOtp:handleVerifyEmailAndRegister} className="auth-form">
+            <form onSubmit={step===1 ? handleSendEmailOtp : handleVerifyEmailAndRegister} className="auth-form">
               <Progress />
               {error && <div className="auth-error">{error}</div>}
 
               {step===1&&(<>
-                <h3>Enter your mobile number</h3>
-                <p>We'll send a verification OTP via SMS</p>
-                <div className="auth-field">
-                  <div style={{display:'flex',border:`1.5px solid ${fieldErrors.phone?'#ef4444':'#e0e0e0'}`,borderRadius:4,overflow:'hidden'}}>
-                    <span style={{padding:'12px',background:'#f8f9fa',color:'#374151',fontSize:14,borderRight:'1px solid #e0e0e0',fontWeight:600}}>+91</span>
-                    <input className="auth-input" type="tel" maxLength={10} placeholder="10-digit mobile number" value={phone}
-                      onChange={e=>{setPhone(e.target.value.replace(/\D/g,''));setFieldErrors({});}} style={{border:'none',borderRadius:0,flex:1}}/>
-                  </div>
-                  {fieldErrors.phone&&<span className="auth-field-error">{fieldErrors.phone}</span>}
-                </div>
-                <button type="submit" className="auth-btn-main" disabled={loading}>{loading?'Sending OTP...':'Send OTP'}</button>
-                <div className="auth-divider"><span className="auth-divider-line"/><span className="auth-divider-text">OR</span><span className="auth-divider-line"/></div>
-                <button type="button" onClick={initiateGoogleLogin} className="auth-btn-google">
-                  <svg width="18" height="18" viewBox="0 0 18 18" style={{marginRight:8}}>
-                    <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
-                    <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
-                    <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
-                    <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
-                  </svg>Continue with Google
-                </button>
-                <a href="/login" className="auth-login-link">Existing User? Log in</a>
-              </>)}
-
-              {step===2&&(<>
-                <h3>Verify your mobile number</h3>
-                <p>Enter the 6-digit OTP sent to +91 {phone}</p>
-                <OtpInput value={phoneOtp} onChange={setPhoneOtp} error={fieldErrors.phoneOtp}/>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:13}}>
-                  <span style={{color:'#6b7280'}}>Didn't receive OTP?</span>
-                  <button type="button" className="resend-btn" disabled={resendTimer>0||loading}
-                    onClick={async()=>{setLoading(true);try{await apiClient.post('/api/auth/otp/send-phone',{phone});startResendTimer();}catch(err){setError(err.response?.data?.error||'Failed to resend.');}finally{setLoading(false);}}}>
-                    {resendTimer>0?`Resend in ${resendTimer}s`:'Resend OTP'}
-                  </button>
-                </div>
-                <div className="auth-btn-row">
-                  <button type="button" className="auth-btn-back" onClick={()=>{setStep(1);setPhoneOtp('');setError('');}}>Back</button>
-                  <button type="submit" className="auth-btn-main" style={{flex:1}} disabled={loading}>{loading?'Verifying...':'Verify OTP'}</button>
-                </div>
-              </>)}
-
-              {step===3&&(<>
                 <h3>Complete your profile</h3>
                 <div style={{display:'flex',gap:10}}>
                   <div className="auth-field" style={{flex:1}}>
@@ -233,19 +173,34 @@ export default function Register() {
                   {fieldErrors.email&&<span className="auth-field-error">{fieldErrors.email}</span>}
                 </div>
                 <div className="auth-field">
+                  <div style={{display:'flex',border:`1.5px solid ${fieldErrors.phone?'#ef4444':'#e0e0e0'}`,borderRadius:4,overflow:'hidden'}}>
+                    <span style={{padding:'12px',background:'#f8f9fa',color:'#374151',fontSize:14,borderRight:'1px solid #e0e0e0',fontWeight:600}}>+91</span>
+                    <input className="auth-input" type="tel" maxLength={10} placeholder="Mobile number (optional)" value={form.phone}
+                      onChange={e=>{setForm(f=>({...f,phone:e.target.value.replace(/\D/g,'')}));setFieldErrors(fe=>({...fe,phone:''}));}} style={{border:'none',borderRadius:0,flex:1}}/>
+                  </div>
+                  {fieldErrors.phone&&<span className="auth-field-error">{fieldErrors.phone}</span>}
+                </div>
+                <div className="auth-field">
                   <input className={`auth-input${fieldErrors.password?' auth-input--error':''}`} type="password" placeholder="Create Password (min. 6 characters)" value={form.password}
                     onChange={e=>{setForm(f=>({...f,password:e.target.value}));setFieldErrors(fe=>({...fe,password:''}));}}/>
                   {fieldErrors.password&&<span className="auth-field-error">{fieldErrors.password}</span>}
                   {form.password&&(()=>{const s=strengthLevel(form.password);return(<div className="strength-bar-wrap"><div className="strength-bar-track"><div className="strength-bar-fill" style={{width:s.width,background:s.color}}/></div><span className="strength-label">{s.label}</span></div>);})()}
                 </div>
-                <div className="auth-btn-row">
-                  <button type="button" className="auth-btn-back" onClick={()=>{setStep(2);setError('');}}>Back</button>
-                  <button type="submit" className="auth-btn-main" style={{flex:1}} disabled={loading}>{loading?'Sending OTP...':'Send Email OTP'}</button>
-                </div>
+                <button type="submit" className="auth-btn-main" disabled={loading}>{loading?'Sending OTP...':'Send Email OTP'}</button>
+                <div className="auth-divider"><span className="auth-divider-line"/><span className="auth-divider-text">OR</span><span className="auth-divider-line"/></div>
+                <button type="button" onClick={initiateGoogleLogin} className="auth-btn-google">
+                  <svg width="18" height="18" viewBox="0 0 18 18" style={{marginRight:8}}>
+                    <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
+                    <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
+                    <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
+                    <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
+                  </svg>Continue with Google
+                </button>
+                <a href="/login" className="auth-login-link">Existing User? Log in</a>
                 <p className="auth-terms">By continuing, you agree to BuildPE's <a href="#" className="auth-link">Terms of Use</a> and <a href="#" className="auth-link">Privacy Policy</a>.</p>
               </>)}
 
-              {step===4&&(<>
+              {step===2&&(<>
                 <h3>Verify your email</h3>
                 <p>Enter the 6-digit OTP sent to <strong>{form.email}</strong></p>
                 <OtpInput value={emailOtp} onChange={setEmailOtp} error={fieldErrors.emailOtp}/>
@@ -257,7 +212,7 @@ export default function Register() {
                   </button>
                 </div>
                 <div className="auth-btn-row">
-                  <button type="button" className="auth-btn-back" onClick={()=>{setStep(3);setEmailOtp('');setError('');}}>Back</button>
+                  <button type="button" className="auth-btn-back" onClick={()=>{setStep(1);setEmailOtp('');setError('');}}>Back</button>
                   <button type="submit" className="auth-btn-main" style={{flex:1}} disabled={loading}>{loading?'Creating account...':'Verify & Create Account'}</button>
                 </div>
               </>)}
